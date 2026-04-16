@@ -24,7 +24,7 @@ func TestNewAuctionGivenARequest(t *testing.T) {
 	}
 
 	if auction.status == "" {
-		t.Fatal("expected auction status to bet set")
+		t.Fatal("expected auction status to be set")
 	}
 
 	if auction.id == uuid.Nil {
@@ -38,5 +38,14 @@ func TestNewAuctionGivenARequest(t *testing.T) {
 	if auction.endAt.IsZero() {
 		t.Fatal("expected endAt to be set")
 	}
+}
 
+func TestNewAuctionSetsStatusOpen(t *testing.T) {
+	itemID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+	reservePrice := 150
+	auction := NewAuction(itemID, reservePrice)
+
+	if auction.status != StatusOpen {
+		t.Fatal("expected auction status to be OPEN")
+	}
 }
