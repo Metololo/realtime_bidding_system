@@ -2,13 +2,13 @@ package domain
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 func TestNewAuctionGivenARequest(t *testing.T) {
-	itemID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
-	reservePrice := 150
+	itemID, reservePrice := newTestAuctionRequest()
 	auction := NewAuction(itemID, reservePrice)
 
 	if auction == nil {
@@ -41,11 +41,26 @@ func TestNewAuctionGivenARequest(t *testing.T) {
 }
 
 func TestNewAuctionSetsStatusOpen(t *testing.T) {
-	itemID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
-	reservePrice := 150
+	itemID, reservePrice := newTestAuctionRequest()
 	auction := NewAuction(itemID, reservePrice)
 
 	if auction.status != StatusOpen {
 		t.Fatal("expected auction status to be OPEN")
 	}
+}
+
+func TestNewAuctionEnds100msAfterStart(t *testing.T) {
+	itemID, reservePrice := newTestAuctionRequest()
+	auction := NewAuction(itemID, reservePrice)
+
+	const expectedAuctionDuration = 100 * time.Millisecond
+	auctionDuration := auction.endAt.Sub(auction.startAt)
+
+	if auctionDuration != expectedAuctionDuration {
+		t.Fatalf("expected auction duration to be %s, got %s", expectedAuctionDuration, auctionDuration)
+	}
+}
+
+func newTestAuctionRequest() (uuid.UUID, int) {
+	return uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"), 150
 }
