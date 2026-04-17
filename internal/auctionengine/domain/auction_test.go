@@ -173,6 +173,19 @@ func TestCannotCloseAnAlreadyClosedAuction(t *testing.T) {
 	}
 }
 
+func TestNewAuctionHasNoLeadingBid(t *testing.T) {
+	itemID, reservePrice := newTestAuctionRequest()
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if auction.leadingBid != nil {
+		t.Fatal("expected bid to be nil")
+	}
+}
+
 func newTestAuctionRequest() (uuid.UUID, int64) {
-	return uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"), 150
+	return uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"), int64(150)
 }

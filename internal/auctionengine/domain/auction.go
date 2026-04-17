@@ -26,6 +26,7 @@ type Auction struct {
 	startAt      time.Time
 	endAt        time.Time
 	status       AuctionStatus
+	leadingBid   *Bid
 }
 
 func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
@@ -47,6 +48,7 @@ func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
 		startAt:      startAt,
 		endAt:        endAt,
 		status:       StatusOpen,
+		leadingBid:   nil,
 	}, nil
 }
 

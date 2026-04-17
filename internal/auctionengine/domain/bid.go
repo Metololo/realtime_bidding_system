@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrNilAuctionID = errors.New("auctionID is nil")
 var ErrNilBidderID = errors.New("bidderID is nil")
 var ErrInvalidBidAmount = errors.New("amount should be > 0")
 
