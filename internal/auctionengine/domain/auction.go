@@ -11,11 +11,13 @@ type AuctionStatus string
 
 const (
 	StatusOpen      AuctionStatus = "OPEN"
+	StatusClosed    AuctionStatus = "CLOSED"
 	AuctionDuration               = 100 * time.Millisecond
 )
 
 var ErrNonPositiveReservePrice = errors.New("negative reserve price")
 var ErrInvalidItemID = errors.New("itemID is nil")
+var ErrAuctionAlreadyClosed = errors.New("auction is already closed")
 
 type Auction struct {
 	id           uuid.UUID
@@ -46,4 +48,13 @@ func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
 		endAt:        endAt,
 		status:       StatusOpen,
 	}, nil
+}
+
+func (a *Auction) Close() error {
+	if a.status == StatusClosed {
+		return ErrAuctionAlreadyClosed
+	}
+
+	a.status = StatusClosed
+	return nil
 }

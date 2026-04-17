@@ -129,6 +129,50 @@ func TestNewAuctionReturnsErrorForNilItemID(t *testing.T) {
 	}
 }
 
+func TestCloseAnExistingAuction(t *testing.T) {
+	itemID, reservePrice := newTestAuctionRequest()
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	err = auction.Close()
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if auction.status != StatusClosed {
+		t.Fatal("expected auction status to be CLOSED")
+	}
+}
+
+func TestCannotCloseAnAlreadyClosedAuction(t *testing.T) {
+	itemID, reservePrice := newTestAuctionRequest()
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	err = auction.Close()
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	err = auction.Close()
+
+	if err == nil {
+		t.Fatal("error is nil")
+	}
+
+	if !errors.Is(err, ErrAuctionAlreadyClosed) {
+		t.Fatalf("expected ErrAuctionAlreadyClosed, got %v", err)
+	}
+}
+
 func newTestAuctionRequest() (uuid.UUID, int64) {
 	return uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"), 150
 }
