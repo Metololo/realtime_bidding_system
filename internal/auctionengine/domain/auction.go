@@ -20,7 +20,7 @@ var ErrInvalidItemID = errors.New("itemID is nil")
 var ErrAuctionIsClosed = errors.New("auction is already closed")
 var ErrAmountLowerThanReservePrice = errors.New("bid amount is lower than reserve price")
 var ErrAuctionIsExpired = errors.New("auction is expired")
-var ErrAmountLowerThanHighestBid = errors.New("bid amount is lower than the highest auction bid amount")
+var ErrAmountNotHigherThanHighestBid = errors.New("bid amount is not higher than the highest auction bid amount")
 
 type Auction struct {
 	id           uuid.UUID
@@ -85,7 +85,7 @@ func (auction *Auction) PlaceBid(bidderID uuid.UUID, amount int64) (*Bid, error)
 	}
 
 	if auction.leadingBid != nil && bid.amount <= auction.leadingBid.amount {
-		return nil, ErrAmountLowerThanHighestBid
+		return nil, ErrAmountNotHigherThanHighestBid
 	}
 
 	auction.leadingBid = bid

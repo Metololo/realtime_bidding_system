@@ -129,7 +129,41 @@ func TestAuctionPlaceBidReturnsErrorWhenLowerThanLeadingBidAmount(t *testing.T) 
 		t.Fatal("expected leading bid to not change")
 	}
 
-	if !errors.Is(err, ErrAmountLowerThanHighestBid) {
+	if !errors.Is(err, ErrAmountNotHigherThanHighestBid) {
+		t.Fatalf("expected error to be ErrAmountLowerThanHighestBid, got %v", err)
+	}
+
+}
+
+func TestAuctionPlaceBidReturnsErrorWhenAmountEqualsLeadingBidAmount(t *testing.T) {
+	auction := newTestAuction(t)
+
+	leadingBidderID := uuid.MustParse("123e1234-e29b-41d4-a716-446655440000")
+	leadingAmount := int64(auction.reservePrice)
+
+	bidderID := uuid.MustParse("444e4444-e29b-41d4-a716-446655440000")
+	amount := int64(auction.reservePrice)
+
+	leadingBid, err := auction.PlaceBid(leadingBidderID, leadingAmount)
+	if err != nil {
+		t.Fatalf("failed to place bid for leading bid, got %v", err)
+	}
+
+	bid, err := auction.PlaceBid(bidderID, amount)
+
+	if err == nil {
+		t.Fatal("error is nil", err)
+	}
+
+	if bid != nil {
+		t.Fatal("bid is not nil")
+	}
+
+	if auction.leadingBid != leadingBid {
+		t.Fatal("expected leading bid to not change")
+	}
+
+	if !errors.Is(err, ErrAmountNotHigherThanHighestBid) {
 		t.Fatalf("expected error to be ErrAmountLowerThanHighestBid, got %v", err)
 	}
 
