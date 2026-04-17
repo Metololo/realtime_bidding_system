@@ -110,6 +110,25 @@ func TestNewAuctionReturnsErrorForZeroReservePrice(t *testing.T) {
 	}
 }
 
+func TestNewAuctionReturnsErrorForNilItemID(t *testing.T) {
+	itemID := uuid.Nil
+	reservePrice := int64(10)
+
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err == nil {
+		t.Fatalf("error is nil")
+	}
+
+	if auction != nil {
+		t.Fatal("expected no auction to be created")
+	}
+
+	if !errors.Is(err, ErrInvalidItemID) {
+		t.Fatalf("expected ErrInvalidItemID, got %v", err)
+	}
+}
+
 func newTestAuctionRequest() (uuid.UUID, int64) {
 	return uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"), 150
 }
