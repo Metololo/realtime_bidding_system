@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,21 +10,26 @@ import (
 type AuctionStatus string
 
 const (
-	StatusOpen AuctionStatus = "OPEN"
+	StatusOpen      AuctionStatus = "OPEN"
+	AuctionDuration               = 100 * time.Millisecond
 )
+
+var ErrNegativeReservePrice = errors.New("negative reserve price")
 
 type Auction struct {
 	id           uuid.UUID
 	itemID       uuid.UUID
-	reservePrice int
+	reservePrice int64
 	startAt      time.Time
 	endAt        time.Time
 	status       AuctionStatus
 }
 
-const AuctionDuration = 100 * time.Millisecond
+func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
+	if reservePrice < 0 {
+		return nil, ErrNegativeReservePrice
+	}
 
-func NewAuction(itemID uuid.UUID, reservePrice int) *Auction {
 	startAt := time.Now()
 	endAt := startAt.Add(AuctionDuration)
 
@@ -34,5 +40,5 @@ func NewAuction(itemID uuid.UUID, reservePrice int) *Auction {
 		startAt:      startAt,
 		endAt:        endAt,
 		status:       StatusOpen,
-	}
+	}, nil
 }

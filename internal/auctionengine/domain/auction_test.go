@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -8,7 +9,11 @@ import (
 
 func TestNewAuctionGivenARequest(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("expected no error, got : %v", err)
+	}
 
 	if auction == nil {
 		t.Fatal("Auction is nil")
@@ -41,7 +46,11 @@ func TestNewAuctionGivenARequest(t *testing.T) {
 
 func TestNewAuctionSetsStatusOpen(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("expected no error, got : %v", err)
+	}
 
 	if auction.status != StatusOpen {
 		t.Fatal("expected auction status to be OPEN")
@@ -50,7 +59,11 @@ func TestNewAuctionSetsStatusOpen(t *testing.T) {
 
 func TestNewAuctionSetsEndAtAfterConfiguredDuration(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("expected no error, got : %v", err)
+	}
 
 	auctionDuration := auction.endAt.Sub(auction.startAt)
 
@@ -59,6 +72,25 @@ func TestNewAuctionSetsEndAtAfterConfiguredDuration(t *testing.T) {
 	}
 }
 
-func newTestAuctionRequest() (uuid.UUID, int) {
+func TestNewAuctionReturnsErrorForNegativeReservePrice(t *testing.T) {
+	itemID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+	reservePrice := int64(-1)
+
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err == nil {
+		t.Fatalf("error is nil")
+	}
+
+	if auction != nil {
+		t.Fatal("expected no auction to be created")
+	}
+
+	if !errors.Is(err, ErrNegativeReservePrice) {
+		t.Fatalf("expected ErrNegativeReservePrice, got %v", err)
+	}
+}
+
+func newTestAuctionRequest() (uuid.UUID, int64) {
 	return uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"), 150
 }
