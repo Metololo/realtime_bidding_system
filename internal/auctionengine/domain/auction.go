@@ -21,10 +21,11 @@ type Auction struct {
 	status       AuctionStatus
 }
 
+const AuctionDuration = 100 * time.Millisecond
+
 func NewAuction(itemID uuid.UUID, reservePrice int) *Auction {
-	const auctionDuration = 100 * time.Millisecond
 	startAt := time.Now()
-	endAt := startAt.Add(auctionDuration)
+	endAt := startAt.Add(AuctionDuration)
 
 	return &Auction{
 		id:           uuid.New(),

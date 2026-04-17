@@ -2,7 +2,6 @@ package domain
 
 import (
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -49,15 +48,14 @@ func TestNewAuctionSetsStatusOpen(t *testing.T) {
 	}
 }
 
-func TestNewAuctionEnds100msAfterStart(t *testing.T) {
+func TestNewAuctionSetsEndAtAfterConfiguredDuration(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
 	auction := NewAuction(itemID, reservePrice)
 
-	const expectedAuctionDuration = 100 * time.Millisecond
 	auctionDuration := auction.endAt.Sub(auction.startAt)
 
-	if auctionDuration != expectedAuctionDuration {
-		t.Fatalf("expected auction duration to be %s, got %s", expectedAuctionDuration, auctionDuration)
+	if auctionDuration != AuctionDuration {
+		t.Fatalf("expected auction duration to be %s, got %s", AuctionDuration, auctionDuration)
 	}
 }
 
