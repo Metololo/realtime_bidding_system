@@ -340,6 +340,46 @@ func TestAuctionPlaceBidReturnsErrorWhenLowerThanLeadingBidAmount(t *testing.T) 
 
 }
 
+func TestAuctionPlaceBidAcceptsHigherAmountThanLeadingBid(t *testing.T) {
+	itemID, reservePrice := newTestAuctionRequest()
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("error should be nil, got %v", err)
+	}
+
+	leadingBidderID := uuid.MustParse("123e1234-e29b-41d4-a716-446655440000")
+	leadingAmount := int64(reservePrice + 10)
+
+	bidderID := uuid.MustParse("444e4444-e29b-41d4-a716-446655440000")
+	amount := int64(reservePrice + 50)
+
+	_, err = auction.PlaceBid(leadingBidderID, leadingAmount)
+	if err != nil {
+		t.Fatalf("failed to place bid for leading bid, got %v", err)
+	}
+
+	bid, err := auction.PlaceBid(bidderID, amount)
+
+	if err != nil {
+		t.Fatal("error should be nil")
+	}
+
+	if bid == nil {
+		t.Fatal("bid is nil")
+	}
+
+	if auction.leadingBid != bid {
+		t.Fatal("expected leading bid to be set to highest bid")
+	}
+	if auction.leadingBid.amount != bid.amount {
+		t.Fatalf("expected leading bid amount to be %v, got %v", bid.amount, auction.leadingBid.amount)
+	}
+	if auction.leadingBid.bidderID != bid.bidderID {
+		t.Fatalf("expected leadin bid id to be %v, got %v", bid.bidderID, auction.leadingBid.bidderID)
+	}
+}
+
 func newTestAuctionRequest() (uuid.UUID, int64) {
 	return uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"), int64(150)
 }
