@@ -12,7 +12,7 @@ func TestNewAuctionGivenARequest(t *testing.T) {
 	auction, err := NewAuction(itemID, reservePrice)
 
 	if err != nil {
-		t.Fatalf("expected no error, got : %v", err)
+		t.Fatalf("expected no error, got %v", err)
 	}
 
 	if auction == nil {
@@ -49,7 +49,7 @@ func TestNewAuctionSetsStatusOpen(t *testing.T) {
 	auction, err := NewAuction(itemID, reservePrice)
 
 	if err != nil {
-		t.Fatalf("expected no error, got : %v", err)
+		t.Fatalf("expected no error, got %v", err)
 	}
 
 	if auction.status != StatusOpen {
@@ -62,7 +62,7 @@ func TestNewAuctionSetsEndAtAfterConfiguredDuration(t *testing.T) {
 	auction, err := NewAuction(itemID, reservePrice)
 
 	if err != nil {
-		t.Fatalf("expected no error, got : %v", err)
+		t.Fatalf("expected no error, got %v", err)
 	}
 
 	auctionDuration := auction.endAt.Sub(auction.startAt)
@@ -86,8 +86,27 @@ func TestNewAuctionReturnsErrorForNegativeReservePrice(t *testing.T) {
 		t.Fatal("expected no auction to be created")
 	}
 
-	if !errors.Is(err, ErrNegativeReservePrice) {
-		t.Fatalf("expected ErrNegativeReservePrice, got %v", err)
+	if !errors.Is(err, ErrNonPositiveReservePrice) {
+		t.Fatalf("expected ErrNonPositiveReservePrice, got %v", err)
+	}
+}
+
+func TestNewAuctionReturnsErrorForZeroReservePrice(t *testing.T) {
+	itemID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+	reservePrice := int64(0)
+
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err == nil {
+		t.Fatalf("error is nil")
+	}
+
+	if auction != nil {
+		t.Fatal("expected no auction to be created")
+	}
+
+	if !errors.Is(err, ErrNonPositiveReservePrice) {
+		t.Fatalf("expected ErrNonPositiveReservePrice, got %v", err)
 	}
 }
 

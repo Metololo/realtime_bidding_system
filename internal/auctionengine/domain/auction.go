@@ -14,7 +14,7 @@ const (
 	AuctionDuration               = 100 * time.Millisecond
 )
 
-var ErrNegativeReservePrice = errors.New("negative reserve price")
+var ErrNonPositiveReservePrice = errors.New("negative reserve price")
 
 type Auction struct {
 	id           uuid.UUID
@@ -26,8 +26,8 @@ type Auction struct {
 }
 
 func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
-	if reservePrice < 0 {
-		return nil, ErrNegativeReservePrice
+	if reservePrice <= 0 {
+		return nil, ErrNonPositiveReservePrice
 	}
 
 	startAt := time.Now()
