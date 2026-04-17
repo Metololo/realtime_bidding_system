@@ -15,7 +15,7 @@ const (
 	AuctionDuration               = 100 * time.Millisecond
 )
 
-var ErrNonPositiveReservePrice = errors.New("negative reserve price")
+var ErrInvalidReservePrice = errors.New("reserve price should be > 0")
 var ErrInvalidItemID = errors.New("itemID is nil")
 var ErrAuctionAlreadyClosed = errors.New("auction is already closed")
 
@@ -30,7 +30,7 @@ type Auction struct {
 
 func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
 	if reservePrice <= 0 {
-		return nil, ErrNonPositiveReservePrice
+		return nil, ErrInvalidReservePrice
 	}
 
 	if itemID == uuid.Nil {

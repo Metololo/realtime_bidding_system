@@ -86,7 +86,7 @@ func TestNewAuctionReturnsErrorForNegativeReservePrice(t *testing.T) {
 		t.Fatal("expected no auction to be created")
 	}
 
-	if !errors.Is(err, ErrNonPositiveReservePrice) {
+	if !errors.Is(err, ErrInvalidReservePrice) {
 		t.Fatalf("expected ErrNonPositiveReservePrice, got %v", err)
 	}
 }
@@ -105,7 +105,7 @@ func TestNewAuctionReturnsErrorForZeroReservePrice(t *testing.T) {
 		t.Fatal("expected no auction to be created")
 	}
 
-	if !errors.Is(err, ErrNonPositiveReservePrice) {
+	if !errors.Is(err, ErrInvalidReservePrice) {
 		t.Fatalf("expected ErrNonPositiveReservePrice, got %v", err)
 	}
 }
