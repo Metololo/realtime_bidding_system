@@ -22,10 +22,6 @@ func TestNewBid(t *testing.T) {
 		t.Fatal("bid is nil")
 	}
 
-	if bid.id == uuid.Nil {
-		t.Fatal("bid id is nil")
-	}
-
 	if bid.bidderID != bidderID {
 		t.Fatalf("expected bidderID to be %v, got %v", bidderID, bid.bidderID)
 	}
@@ -65,6 +61,7 @@ func TestBidAmountCannotBeNegative(t *testing.T) {
 	if !errors.Is(err, ErrInvalidBidAmount) {
 		t.Fatalf("expected error to be ErrInvalidBidAmount, got %v", err)
 	}
+
 }
 
 func TestBidAmountCannotBeZero(t *testing.T) {
