@@ -186,6 +186,88 @@ func TestNewAuctionHasNoLeadingBid(t *testing.T) {
 	}
 }
 
+func TestAuctionWinnerReturnsLeadingBid(t *testing.T) {
+	itemID, reservePrice := newTestAuctionRequest()
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	bidderID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+	amount := int64(200)
+
+	_, err = auction.PlaceBid(bidderID, amount)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	err = auction.Close()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	winner, err := auction.Winner()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if winner == nil {
+		t.Fatal("expected winner to be not nil")
+	}
+
+	if winner.bidderID != bidderID {
+		t.Fatalf("expected winner bidderID to be %v, got %v", bidderID, winner.bidderID)
+	}
+}
+
+func TestAuctionWinnerReturnsErrorIfAuctionIsNotClosed(t *testing.T) {
+	itemID, reservePrice := newTestAuctionRequest()
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	_, err = auction.Winner()
+
+	if err == nil {
+		t.Fatal("error is nil")
+	}
+	if !errors.Is(err, ErrAuctionIsOpen) {
+		t.Fatalf("expected error to be %v, got %v", ErrAuctionIsOpen, err)
+	}
+}
+
+func TestAuctionWinnerReturnsErrorIfNoBidsPlaced(t *testing.T) {
+	itemID, reservePrice := newTestAuctionRequest()
+	auction, err := NewAuction(itemID, reservePrice)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	err = auction.Close()
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	winner, err := auction.Winner()
+
+	if err == nil {
+		t.Fatal("error is nil")
+	}
+
+	if winner != nil {
+		t.Fatal("expected winner to be nil")
+	}
+
+	if !errors.Is(err, ErrNoBidsPlaced) {
+		t.Fatalf("expected error to be %v, got %v", ErrNoBidsPlaced, err)
+	}
+}
+
 func newTestAuctionRequest() (uuid.UUID, int64) {
 	return uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"), int64(150)
 }

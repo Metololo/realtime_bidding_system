@@ -50,3 +50,13 @@ func (r *AuctionRepository) FindByID(id uuid.UUID) (*domain.Auction, error) {
 	}
 	return auction, nil
 }
+
+func (r *AuctionRepository) DeleteByID(id uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, exists := r.auctions[id]; !exists {
+		return ErrAuctionNotFound
+	}
+	delete(r.auctions, id)
+	return nil
+}

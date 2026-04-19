@@ -35,6 +35,29 @@ func TestCreateAuctionReturnsAuctionResult(t *testing.T) {
 
 }
 
+func TestCreateAuctionSaveInRepository(t *testing.T) {
+	auctionRepository := inmemory.NewAuctionRepository()
+	auctionService := NewAuctionService(auctionRepository)
+
+	auctionCommand := newTestCreateAuctionCommand()
+	auctionResult, err := auctionService.CreateAuction(auctionCommand)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	auction, err := auctionRepository.FindByID(auctionResult.ID)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if auction == nil {
+		t.Fatal("auction is nil")
+	}
+
+}
+
 func TestCreateAuctionReturnsErrorIfItemIDIsNil(t *testing.T) {
 	auctionRepository := inmemory.NewAuctionRepository()
 	auctionService := NewAuctionService(auctionRepository)

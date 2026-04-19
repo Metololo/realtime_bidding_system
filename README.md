@@ -13,7 +13,7 @@ The system is designed around the following **target** constraints:
 - auctions are time-bounded: **<= 100 ms**
 - bids arriving too late must be rejected
 - if the system is overloaded, bids must be rejected fast
-- target throughput: **300 active auctions per second**
+- target throughput: **1000 active auctions per second**
 - bids should arrive within **20 ms** of auction start
 
 This is a simulation project designed for experimentation and performance measurement.

@@ -1,6 +1,8 @@
 package application
 
 import (
+	"errors"
+
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
 	"github.com/google/uuid"
 )
@@ -42,4 +44,27 @@ func (a *AuctionService) CreateAuction(auctionCommand CreateAuctionCommand) (*Au
 		ItemID:       auction.ItemID(),
 		ReservePrice: auction.ReservePrice(),
 	}, nil
+}
+
+func (a *AuctionService) closeAuction(id uuid.UUID) error {
+	auction, err := a.auctionRepository.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	err = auction.Close()
+	if err != nil {
+		return err
+	}
+
+	winner, err := auction.Winner()
+
+	if err != nil && !errors.Is(err, domain.ErrNoBidsPlaced) {
+		return err
+	}
+
+	// TODO: publish winner to bidders
+	_ = winner
+
+	return a.auctionRepository.DeleteByID(id)
 }
