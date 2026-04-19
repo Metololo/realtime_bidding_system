@@ -83,6 +83,20 @@ func TestAuctionRepositorySaveReturnsErrorIfAuctionAlreadyExists(t *testing.T) {
 	}
 }
 
+func TestLockAuctionReturnsErrorIfAuctionNotFound(t *testing.T) {
+	auctionRepository := NewAuctionRepository()
+	nonExistentID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+
+	_, err := auctionRepository.LockAuction(nonExistentID)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !errors.Is(err, ErrAuctionNotFound) {
+		t.Fatalf("expected error to be %v, got %v", ErrAuctionNotFound, err)
+	}
+}
+
 func newTestAuction(t *testing.T) *domain.Auction {
 	t.Helper()
 

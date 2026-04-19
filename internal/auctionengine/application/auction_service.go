@@ -22,6 +22,18 @@ type AuctionResult struct {
 	ReservePrice int64
 }
 
+type BidCommand struct {
+	AuctionID uuid.UUID
+	BidderID  uuid.UUID
+	Amount    int64
+}
+
+type BidResult struct {
+	AuctionID uuid.UUID
+	BidderID  uuid.UUID
+	Amount    int64
+}
+
 func NewAuctionService(auctionRepository AuctionRepository) *AuctionService {
 	return &AuctionService{
 		auctionRepository: auctionRepository,
@@ -67,4 +79,29 @@ func (a *AuctionService) closeAuction(id uuid.UUID) error {
 	_ = winner
 
 	return a.auctionRepository.DeleteByID(id)
+}
+
+func (a *AuctionService) PlaceBid(bidCommand BidCommand) (*BidResult, error) {
+
+	unlock, err := a.auctionRepository.LockAuction(bidCommand.AuctionID)
+	if err != nil {
+		return nil, err
+	}
+	defer unlock()
+
+	auction, err := a.auctionRepository.FindByID(bidCommand.AuctionID)
+	if err != nil {
+		return nil, err
+	}
+
+	bid, err := auction.PlaceBid(bidCommand.BidderID, bidCommand.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	return &BidResult{
+		AuctionID: auction.ID(),
+		BidderID:  bid.BidderID(),
+		Amount:    bid.Amount(),
+	}, nil
 }

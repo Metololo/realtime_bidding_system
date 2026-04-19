@@ -14,12 +14,16 @@ var ErrAuctionAlreadyExists = errors.New("auction with the same ID already exist
 
 type AuctionRepository struct {
 	mu       sync.RWMutex
-	auctions map[uuid.UUID]*domain.Auction
+	auctions map[uuid.UUID]*auctionEntry
+}
+type auctionEntry struct {
+	auction *domain.Auction
+	mu      sync.Mutex
 }
 
 func NewAuctionRepository() *AuctionRepository {
 	return &AuctionRepository{
-		auctions: make(map[uuid.UUID]*domain.Auction),
+		auctions: make(map[uuid.UUID]*auctionEntry),
 	}
 }
 
@@ -38,25 +42,51 @@ func (r *AuctionRepository) Save(auction *domain.Auction) error {
 		return ErrAuctionAlreadyExists
 	}
 
-	r.auctions[auction.ID()] = auction
+	r.auctions[auction.ID()] = &auctionEntry{auction: auction}
 	return nil
 }
 func (r *AuctionRepository) FindByID(id uuid.UUID) (*domain.Auction, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	auction, exists := r.auctions[id]
+
+	auctionEntry, exists := r.auctions[id]
 	if !exists {
 		return nil, ErrAuctionNotFound
 	}
-	return auction, nil
+	return auctionEntry.auction, nil
 }
 
 func (r *AuctionRepository) DeleteByID(id uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	if _, exists := r.auctions[id]; !exists {
 		return ErrAuctionNotFound
 	}
 	delete(r.auctions, id)
 	return nil
+}
+
+func (r *AuctionRepository) findEntryById(id uuid.UUID) (*auctionEntry, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	auctionEntry, exists := r.auctions[id]
+	if !exists {
+		return nil, ErrAuctionNotFound
+	}
+	return auctionEntry, nil
+}
+
+func (r *AuctionRepository) LockAuction(id uuid.UUID) (func(), error) {
+	auctionEntry, err := r.findEntryById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	auctionEntry.mu.Lock()
+
+	return func() {
+		auctionEntry.mu.Unlock()
+	}, nil
 }
