@@ -32,6 +32,18 @@ type Auction struct {
 	leadingBid   *Bid
 }
 
+func (a *Auction) ID() uuid.UUID {
+	return a.id
+}
+
+func (a *Auction) ItemID() uuid.UUID {
+	return a.itemID
+}
+
+func (a *Auction) ReservePrice() int64 {
+	return a.reservePrice
+}
+
 func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
 	if reservePrice <= 0 {
 		return nil, ErrInvalidReservePrice
