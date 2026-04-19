@@ -62,6 +62,27 @@ func TestAuctionRepositorySaveReturnsErrorIfAuctionIsNil(t *testing.T) {
 	}
 }
 
+func TestAuctionRepositorySaveReturnsErrorIfAuctionAlreadyExists(t *testing.T) {
+	auctionRepository := NewAuctionRepository()
+	auction := newTestAuction(t)
+
+	err := auctionRepository.Save(auction)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	err = auctionRepository.Save(auction)
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !errors.Is(err, ErrAuctionAlreadyExists) {
+		t.Fatalf("expected error to be %v, got %v", ErrAuctionAlreadyExists, err)
+	}
+}
+
 func newTestAuction(t *testing.T) *domain.Auction {
 	t.Helper()
 

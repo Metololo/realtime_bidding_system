@@ -10,6 +10,7 @@ import (
 
 var ErrNilAuction = errors.New("auction is nil")
 var ErrAuctionNotFound = errors.New("auction not found")
+var ErrAuctionAlreadyExists = errors.New("auction with the same ID already exists")
 
 type AuctionRepository struct {
 	mu       sync.RWMutex
@@ -30,6 +31,13 @@ func (r *AuctionRepository) Save(auction *domain.Auction) error {
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	id := auction.ID()
+
+	if _, exists := r.auctions[id]; exists {
+		return ErrAuctionAlreadyExists
+	}
+
 	r.auctions[auction.ID()] = auction
 	return nil
 }
