@@ -209,6 +209,27 @@ func TestAuctionPlaceBidAcceptsHigherAmountThanLeadingBid(t *testing.T) {
 	}
 }
 
+func TestAuctionPlaceBidRejectIfBidderAlreadyPlacedBid(t *testing.T) {
+	auction := newTestAuction(t)
+
+	bidderID := uuid.MustParse("123e1234-e29b-41d4-a716-446655440000")
+	amount := int64(auction.reservePrice + 10)
+
+	_, err := auction.PlaceBid(bidderID, amount)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	_, err = auction.PlaceBid(bidderID, amount+10)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !errors.Is(err, ErrBidderAlreadyPlacedBid) {
+		t.Fatalf("expected error to be %v, got %v", ErrBidderAlreadyPlacedBid, err)
+	}
+}
+
 func newTestAuction(t *testing.T) *Auction {
 	t.Helper()
 

@@ -78,6 +78,7 @@ func (a *AuctionService) closeAuction(id uuid.UUID) error {
 	// TODO: publish winner to bidders
 	_ = winner
 
+	// made the choice to delete the auction after closing it, but we could also keep it for historical purposes
 	return a.auctionRepository.DeleteByID(id)
 }
 

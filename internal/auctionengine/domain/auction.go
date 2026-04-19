@@ -23,6 +23,7 @@ var ErrAuctionIsExpired = errors.New("auction is expired")
 var ErrAmountNotHigherThanHighestBid = errors.New("bid amount is not higher than the highest auction bid amount")
 var ErrAuctionIsOpen = errors.New("auction is not closed yet")
 var ErrNoBidsPlaced = errors.New("no bids have been placed on this auction")
+var ErrBidderAlreadyPlacedBid = errors.New("bidder has already placed a bid on this auction")
 
 type Auction struct {
 	id           uuid.UUID
@@ -32,6 +33,7 @@ type Auction struct {
 	endAt        time.Time
 	status       AuctionStatus
 	leadingBid   *Bid
+	bidsPlaced   []Bid
 }
 
 func (a *Auction) ID() uuid.UUID {
@@ -98,6 +100,10 @@ func (auction *Auction) PlaceBid(bidderID uuid.UUID, amount int64) (*Bid, error)
 		return nil, ErrAuctionIsExpired
 	}
 
+	if auction.hasBidderAlreadyPlacedBid(bidderID) {
+		return nil, ErrBidderAlreadyPlacedBid
+	}
+
 	bid, err := NewBid(bidderID, amount)
 
 	if err != nil {
@@ -112,8 +118,19 @@ func (auction *Auction) PlaceBid(bidderID uuid.UUID, amount int64) (*Bid, error)
 		return nil, ErrAmountNotHigherThanHighestBid
 	}
 
+	auction.bidsPlaced = append(auction.bidsPlaced, *bid)
+
 	auction.leadingBid = bid
 	return bid, nil
+}
+
+func (a *Auction) hasBidderAlreadyPlacedBid(bidderID uuid.UUID) bool {
+	for _, b := range a.bidsPlaced {
+		if b.BidderID() == bidderID {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *Auction) isExpired() bool {
