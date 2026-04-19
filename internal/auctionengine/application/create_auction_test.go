@@ -1,8 +1,10 @@
 package application
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/repository/inmemory"
 	"github.com/google/uuid"
 )
@@ -29,6 +31,52 @@ func TestCreateAuctionReturnsAuctionResult(t *testing.T) {
 
 	if auctionResult.ReservePrice != auctionCommand.ReservePrice {
 		t.Fatalf("expected reserve price to be %v, got %v", auctionCommand.ReservePrice, auctionResult.ReservePrice)
+	}
+
+}
+
+func TestCreateAuctionReturnsErrorIfItemIDIsNil(t *testing.T) {
+	auctionRepository := inmemory.NewAuctionRepository()
+	auctionService := NewAuctionService(auctionRepository)
+
+	auctionCommand := newTestCreateAuctionCommand()
+	auctionCommand.ItemID = uuid.Nil
+
+	auction, err := auctionService.CreateAuction(auctionCommand)
+
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+
+	if auction != nil {
+		t.Fatal("expected auction to be nil")
+	}
+
+	if !errors.Is(err, domain.ErrInvalidItemID) {
+		t.Fatalf("expected error to be %v, got %v", domain.ErrInvalidItemID, err)
+	}
+
+}
+
+func TestCreateAuctionReturnsErrorIfReservePriceIsInvalid(t *testing.T) {
+	auctionRepository := inmemory.NewAuctionRepository()
+	auctionService := NewAuctionService(auctionRepository)
+
+	auctionCommand := newTestCreateAuctionCommand()
+	auctionCommand.ReservePrice = -1
+
+	auction, err := auctionService.CreateAuction(auctionCommand)
+
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+
+	if auction != nil {
+		t.Fatal("expected auction to be nil")
+	}
+
+	if !errors.Is(err, domain.ErrInvalidReservePrice) {
+		t.Fatalf("expected error to be %v, got %v", domain.ErrInvalidReservePrice, err)
 	}
 
 }
