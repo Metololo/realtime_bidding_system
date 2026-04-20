@@ -124,8 +124,8 @@ func TestNewAuctionReturnsErrorForNilItemID(t *testing.T) {
 		t.Fatal("expected no auction to be created")
 	}
 
-	if !errors.Is(err, ErrInvalidItemID) {
-		t.Fatalf("expected ErrInvalidItemID, got %v", err)
+	if !errors.Is(err, ErrNilItemId) {
+		t.Fatalf("expected ErrNilItemId, got %v", err)
 	}
 }
 

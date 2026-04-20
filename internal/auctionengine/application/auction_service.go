@@ -59,6 +59,14 @@ func (a *AuctionService) CreateAuction(auctionCommand CreateAuctionCommand) (*Au
 }
 
 func (a *AuctionService) closeAuction(id uuid.UUID) error {
+
+	a.auctionRepository.SetAuctionClosing(id)
+	unlock, err := a.auctionRepository.LockAuction(id)
+	if err != nil {
+		return err
+	}
+	defer unlock()
+
 	auction, err := a.auctionRepository.FindByID(id)
 	if err != nil {
 		return err
@@ -83,6 +91,14 @@ func (a *AuctionService) closeAuction(id uuid.UUID) error {
 }
 
 func (a *AuctionService) PlaceBid(bidCommand BidCommand) (*BidResult, error) {
+
+	isClosing, err := a.auctionRepository.IsAuctionClosing(bidCommand.AuctionID)
+	if err != nil {
+		return nil, err
+	}
+	if isClosing {
+		return nil, err
+	}
 
 	unlock, err := a.auctionRepository.LockAuction(bidCommand.AuctionID)
 	if err != nil {

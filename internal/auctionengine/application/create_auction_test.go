@@ -75,8 +75,8 @@ func TestCreateAuctionReturnsErrorIfItemIDIsNil(t *testing.T) {
 		t.Fatal("expected auction to be nil")
 	}
 
-	if !errors.Is(err, domain.ErrInvalidItemID) {
-		t.Fatalf("expected error to be %v, got %v", domain.ErrInvalidItemID, err)
+	if !errors.Is(err, domain.ErrNilItemId) {
+		t.Fatalf("expected error to be %v, got %v", domain.ErrNilItemId, err)
 	}
 
 }

@@ -10,4 +10,6 @@ type AuctionRepository interface {
 	FindByID(id uuid.UUID) (*domain.Auction, error)
 	DeleteByID(id uuid.UUID) error
 	LockAuction(id uuid.UUID) (func(), error)
+	SetAuctionClosing(id uuid.UUID) error
+	IsAuctionClosing(id uuid.UUID) (bool, error)
 }

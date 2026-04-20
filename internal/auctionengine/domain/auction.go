@@ -16,7 +16,7 @@ const (
 )
 
 var ErrInvalidReservePrice = errors.New("reserve price should be > 0")
-var ErrInvalidItemID = errors.New("itemID is nil")
+var ErrNilItemId = errors.New("itemID is nil")
 var ErrAuctionIsClosed = errors.New("auction is already closed")
 var ErrAmountLowerThanReservePrice = errors.New("bid amount is lower than reserve price")
 var ErrAuctionIsExpired = errors.New("auction is expired")
@@ -58,7 +58,7 @@ func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
 	}
 
 	if itemID == uuid.Nil {
-		return nil, ErrInvalidItemID
+		return nil, ErrNilItemId
 	}
 
 	startAt := time.Now()

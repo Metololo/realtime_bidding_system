@@ -3,6 +3,7 @@ package inmemory
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
 	"github.com/google/uuid"
@@ -11,6 +12,7 @@ import (
 var ErrNilAuction = errors.New("auction is nil")
 var ErrAuctionNotFound = errors.New("auction not found")
 var ErrAuctionAlreadyExists = errors.New("auction with the same ID already exists")
+var ErrAuctionClosing = errors.New("auction is closing")
 
 type AuctionRepository struct {
 	mu       sync.RWMutex
@@ -18,6 +20,7 @@ type AuctionRepository struct {
 }
 type auctionEntry struct {
 	auction *domain.Auction
+	closing atomic.Bool
 	mu      sync.Mutex
 }
 
@@ -89,4 +92,22 @@ func (r *AuctionRepository) LockAuction(id uuid.UUID) (func(), error) {
 	return func() {
 		auctionEntry.mu.Unlock()
 	}, nil
+}
+
+func (r *AuctionRepository) SetAuctionClosing(id uuid.UUID) error {
+	auctionEntry, err := r.findEntryById(id)
+	if err != nil {
+		return err
+	}
+
+	auctionEntry.closing.Store(true)
+	return nil
+}
+
+func (r *AuctionRepository) IsAuctionClosing(id uuid.UUID) (bool, error) {
+	auctionEntry, err := r.findEntryById(id)
+	if err != nil {
+		return false, err
+	}
+	return auctionEntry.closing.Load(), nil
 }

@@ -97,6 +97,44 @@ func TestLockAuctionReturnsErrorIfAuctionNotFound(t *testing.T) {
 	}
 }
 
+func TestSetAuctionClosingReturnsErrorIfAuctionNotFound(t *testing.T) {
+	auctionRepository := NewAuctionRepository()
+	nonExistentID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+
+	err := auctionRepository.SetAuctionClosing(nonExistentID)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !errors.Is(err, ErrAuctionNotFound) {
+		t.Fatalf("expected error to be %v, got %v", ErrAuctionNotFound, err)
+	}
+}
+
+func TestSetAuctionClosingSuccessfullySetsClosingFlag(t *testing.T) {
+	auctionRepository := NewAuctionRepository()
+	auction := newTestAuction(t)
+
+	err := auctionRepository.Save(auction)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	err = auctionRepository.SetAuctionClosing(auction.ID())
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	isClosing, err := auctionRepository.IsAuctionClosing(auction.ID())
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if !isClosing {
+		t.Fatal("expected auction to be closing, but it is not")
+	}
+}
+
 func newTestAuction(t *testing.T) *domain.Auction {
 	t.Helper()
 
