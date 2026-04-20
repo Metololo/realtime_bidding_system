@@ -48,6 +48,10 @@ func (a *Auction) ReservePrice() int64 {
 	return a.reservePrice
 }
 
+func (a *Auction) LeadingBid() *Bid {
+	return a.leadingBid
+}
+
 func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
 	if reservePrice <= 0 {
 		return nil, ErrInvalidReservePrice
