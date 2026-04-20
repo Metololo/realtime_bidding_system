@@ -5,10 +5,11 @@
 help:
 	@echo "Available commands:"
 	@echo ""
-	@echo "  make fmt    - Format code using gofmt"
-	@echo "  make lint   - Run linter (golangci-lint)"
-	@echo "  make fix    - Auto-fix formatting and lint issues"
-	@echo "  make check  - Run checks without modifying files (CI mode)"
+	@echo "  make fmt           - Format code using gofmt"
+	@echo "  make lint          - Run linter (golangci-lint)"
+	@echo "  make fix           - Auto-fix formatting and lint issues"
+	@echo "  make check         - Run checks without modifying files (CI mode)"
+	@echo "  make install-hooks - Install pre-commit hooks"
 	@echo ""
 
 fmt:
@@ -30,3 +31,7 @@ check:
 
 	@echo "Running linter..."
 	golangci-lint run
+
+install-hooks:
+	cp scripts/pre-commit.sh .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
