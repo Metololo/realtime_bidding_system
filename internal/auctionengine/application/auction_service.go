@@ -60,7 +60,11 @@ func (a *AuctionService) CreateAuction(auctionCommand CreateAuctionCommand) (*Au
 
 func (a *AuctionService) closeAuction(id uuid.UUID) error {
 
-	a.auctionRepository.SetAuctionClosing(id)
+	err := a.auctionRepository.SetAuctionClosing(id)
+	if err != nil {
+		return err
+	}
+
 	unlock, err := a.auctionRepository.LockAuction(id)
 	if err != nil {
 		return err
