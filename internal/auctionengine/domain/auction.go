@@ -16,13 +16,12 @@ const (
 )
 
 var ErrInvalidReservePrice = errors.New("reserve price should be > 0")
-var ErrNilItemId = errors.New("itemID is nil")
+var ErrNilItemID = errors.New("itemID is nil")
 var ErrAuctionIsClosed = errors.New("auction is already closed")
 var ErrAmountLowerThanReservePrice = errors.New("bid amount is lower than reserve price")
 var ErrAuctionIsExpired = errors.New("auction is expired")
 var ErrAmountNotHigherThanHighestBid = errors.New("bid amount is not higher than the highest auction bid amount")
 var ErrAuctionIsOpen = errors.New("auction is not closed yet")
-var ErrNoBidsPlaced = errors.New("no bids have been placed on this auction")
 var ErrBidderAlreadyPlacedBid = errors.New("bidder has already placed a bid on this auction")
 
 type Auction struct {
@@ -58,7 +57,7 @@ func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
 	}
 
 	if itemID == uuid.Nil {
-		return nil, ErrNilItemId
+		return nil, ErrNilItemID
 	}
 
 	startAt := time.Now()
@@ -87,9 +86,6 @@ func (a *Auction) Close() error {
 func (a *Auction) Winner() (*Bid, error) {
 	if a.status != StatusClosed {
 		return nil, ErrAuctionIsOpen
-	}
-	if a.leadingBid == nil {
-		return nil, ErrNoBidsPlaced
 	}
 	return a.leadingBid, nil
 }

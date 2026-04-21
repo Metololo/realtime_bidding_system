@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
-	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/repository/inmemory"
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/active_auction_manager/inmemory"
 	"github.com/google/uuid"
 )
 
 func TestPlaceBidAcceptsValidBid(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -45,8 +45,8 @@ func TestPlaceBidAcceptsValidBid(t *testing.T) {
 }
 
 func TestPlaceBidWithInvalidAuctionIDReturnsError(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	bidCommand := newTestPlaceBidCommand(uuid.MustParse("00000000-0000-0000-0000-000000000000"))
 	_, err := auctionService.PlaceBid(bidCommand)
@@ -55,14 +55,14 @@ func TestPlaceBidWithInvalidAuctionIDReturnsError(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 
-	if !errors.Is(err, inmemory.ErrAuctionNotFound) {
+	if !errors.Is(err, inmemory.ErrAuctionNotActive) {
 		t.Fatalf("expected auction not found error, got %v", err)
 	}
 }
 
 func TestPlaceBidWithAmountLessThanReservePriceReturnsError(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -85,8 +85,8 @@ func TestPlaceBidWithAmountLessThanReservePriceReturnsError(t *testing.T) {
 }
 
 func TestPlaceBidWithAmountLessThanCurrentLeadingBidReturnsError(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -118,8 +118,8 @@ func TestPlaceBidWithAmountLessThanCurrentLeadingBidReturnsError(t *testing.T) {
 }
 
 func TestPlaceBidOnRemovedAuctionReturnsNotFound(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -140,14 +140,14 @@ func TestPlaceBidOnRemovedAuctionReturnsNotFound(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 
-	if !errors.Is(err, inmemory.ErrAuctionNotFound) {
-		t.Fatalf("expected error to be %v, got %v", inmemory.ErrAuctionNotFound, err)
+	if !errors.Is(err, inmemory.ErrAuctionNotActive) {
+		t.Fatalf("expected error to be %v, got %v", inmemory.ErrAuctionNotActive, err)
 	}
 }
 
 func TestPlaceBidWithEqualAmountToCurrentLeadingBidReturnsError(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)

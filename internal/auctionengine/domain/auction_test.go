@@ -124,7 +124,7 @@ func TestNewAuctionReturnsErrorForNilItemID(t *testing.T) {
 		t.Fatal("expected no auction to be created")
 	}
 
-	if !errors.Is(err, ErrNilItemId) {
+	if !errors.Is(err, ErrNilItemID) {
 		t.Fatalf("expected ErrNilItemId, got %v", err)
 	}
 }
@@ -239,7 +239,7 @@ func TestAuctionWinnerReturnsErrorIfAuctionIsNotClosed(t *testing.T) {
 	}
 }
 
-func TestAuctionWinnerReturnsErrorIfNoBidsPlaced(t *testing.T) {
+func TestAuctionWinnerReturnsNilIfNoBidsPlaced(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
 	auction, err := NewAuction(itemID, reservePrice)
 
@@ -255,16 +255,12 @@ func TestAuctionWinnerReturnsErrorIfNoBidsPlaced(t *testing.T) {
 
 	winner, err := auction.Winner()
 
-	if err == nil {
-		t.Fatal("error is nil")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
 	}
 
 	if winner != nil {
 		t.Fatal("expected winner to be nil")
-	}
-
-	if !errors.Is(err, ErrNoBidsPlaced) {
-		t.Fatalf("expected error to be %v, got %v", ErrNoBidsPlaced, err)
 	}
 }
 

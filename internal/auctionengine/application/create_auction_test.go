@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
-	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/repository/inmemory"
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/active_auction_manager/inmemory"
 	"github.com/google/uuid"
 )
 
 func TestCreateAuctionReturnsAuctionResult(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -36,8 +36,8 @@ func TestCreateAuctionReturnsAuctionResult(t *testing.T) {
 }
 
 func TestCreateAuctionSaveInRepository(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -46,21 +46,18 @@ func TestCreateAuctionSaveInRepository(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	auction, err := auctionRepository.FindByID(auctionResult.ID)
+	bidCommand := newTestPlaceBidCommand(auctionResult.ID)
+	_, err = auctionService.PlaceBid(bidCommand)
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if auction == nil {
-		t.Fatal("auction is nil")
-	}
-
 }
 
 func TestCreateAuctionReturnsErrorIfItemIDIsNil(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionCommand.ItemID = uuid.Nil
@@ -75,15 +72,15 @@ func TestCreateAuctionReturnsErrorIfItemIDIsNil(t *testing.T) {
 		t.Fatal("expected auction to be nil")
 	}
 
-	if !errors.Is(err, domain.ErrNilItemId) {
-		t.Fatalf("expected error to be %v, got %v", domain.ErrNilItemId, err)
+	if !errors.Is(err, domain.ErrNilItemID) {
+		t.Fatalf("expected error to be %v, got %v", domain.ErrNilItemID, err)
 	}
 
 }
 
 func TestCreateAuctionReturnsErrorIfReservePriceIsInvalid(t *testing.T) {
-	auctionRepository := inmemory.NewAuctionRepository()
-	auctionService := NewAuctionService(auctionRepository)
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	auctionService := NewAuctionService(activeAuctionManager)
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionCommand.ReservePrice = -1

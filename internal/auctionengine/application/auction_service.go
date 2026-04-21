@@ -1,14 +1,12 @@
 package application
 
 import (
-	"errors"
-
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
 	"github.com/google/uuid"
 )
 
 type AuctionService struct {
-	auctionRepository AuctionRepository
+	activeAuctionManager ActiveAuctionManager
 }
 
 type CreateAuctionCommand struct {
@@ -34,9 +32,9 @@ type BidResult struct {
 	Amount    int64
 }
 
-func NewAuctionService(auctionRepository AuctionRepository) *AuctionService {
+func NewAuctionService(activeAuctionManager ActiveAuctionManager) *AuctionService {
 	return &AuctionService{
-		auctionRepository: auctionRepository,
+		activeAuctionManager: activeAuctionManager,
 	}
 }
 
@@ -46,7 +44,7 @@ func (a *AuctionService) CreateAuction(auctionCommand CreateAuctionCommand) (*Au
 		return nil, err
 	}
 
-	err = a.auctionRepository.Save(auction)
+	err = a.activeAuctionManager.Save(auction)
 	if err != nil {
 		return nil, err
 	}
@@ -60,68 +58,28 @@ func (a *AuctionService) CreateAuction(auctionCommand CreateAuctionCommand) (*Au
 
 func (a *AuctionService) closeAuction(id uuid.UUID) error {
 
-	err := a.auctionRepository.SetAuctionClosing(id)
+	winner, err := a.activeAuctionManager.CloseAuction(id)
 	if err != nil {
-		return err
-	}
-
-	unlock, err := a.auctionRepository.LockAuction(id)
-	if err != nil {
-		return err
-	}
-	defer unlock()
-
-	auction, err := a.auctionRepository.FindByID(id)
-	if err != nil {
-		return err
-	}
-
-	err = auction.Close()
-	if err != nil {
-		return err
-	}
-
-	winner, err := auction.Winner()
-
-	if err != nil && !errors.Is(err, domain.ErrNoBidsPlaced) {
 		return err
 	}
 
 	// TODO: publish winner to bidders
 	_ = winner
 
-	// made the choice to delete the auction after closing it, but we could also keep it for historical purposes
-	return a.auctionRepository.DeleteByID(id)
+	return nil
+
 }
 
 func (a *AuctionService) PlaceBid(bidCommand BidCommand) (*BidResult, error) {
 
-	isClosing, err := a.auctionRepository.IsAuctionClosing(bidCommand.AuctionID)
-	if err != nil {
-		return nil, err
-	}
-	if isClosing {
-		return nil, err
-	}
-
-	unlock, err := a.auctionRepository.LockAuction(bidCommand.AuctionID)
-	if err != nil {
-		return nil, err
-	}
-	defer unlock()
-
-	auction, err := a.auctionRepository.FindByID(bidCommand.AuctionID)
-	if err != nil {
-		return nil, err
-	}
-
-	bid, err := auction.PlaceBid(bidCommand.BidderID, bidCommand.Amount)
+	auctionID, bidderID, amount := bidCommand.AuctionID, bidCommand.BidderID, bidCommand.Amount
+	bid, err := a.activeAuctionManager.PlaceBid(auctionID, bidderID, amount)
 	if err != nil {
 		return nil, err
 	}
 
 	return &BidResult{
-		AuctionID: auction.ID(),
+		AuctionID: auctionID,
 		BidderID:  bid.BidderID(),
 		Amount:    bid.Amount(),
 	}, nil
