@@ -24,6 +24,9 @@ var ErrAmountNotHigherThanHighestBid = errors.New("bid amount is not higher than
 var ErrAuctionIsOpen = errors.New("auction is not closed yet")
 var ErrBidderAlreadyPlacedBid = errors.New("bidder has already placed a bid on this auction")
 
+type Clock interface {
+	Now() time.Time
+}
 type Auction struct {
 	id           uuid.UUID
 	itemID       uuid.UUID
@@ -33,6 +36,7 @@ type Auction struct {
 	status       AuctionStatus
 	leadingBid   *Bid
 	bidsPlaced   []Bid
+	clock        Clock
 }
 
 func (a *Auction) ID() uuid.UUID {
@@ -51,7 +55,7 @@ func (a *Auction) LeadingBid() *Bid {
 	return a.leadingBid
 }
 
-func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
+func NewAuction(itemID uuid.UUID, reservePrice int64, clock Clock) (*Auction, error) {
 	if reservePrice <= 0 {
 		return nil, ErrInvalidReservePrice
 	}
@@ -60,7 +64,7 @@ func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
 		return nil, ErrNilItemID
 	}
 
-	startAt := time.Now()
+	startAt := clock.Now()
 	endAt := startAt.Add(AuctionDuration)
 
 	return &Auction{
@@ -71,6 +75,7 @@ func NewAuction(itemID uuid.UUID, reservePrice int64) (*Auction, error) {
 		endAt:        endAt,
 		status:       StatusOpen,
 		leadingBid:   nil,
+		clock:        clock,
 	}, nil
 }
 
@@ -134,7 +139,7 @@ func (a *Auction) hasBidderAlreadyPlacedBid(bidderID uuid.UUID) bool {
 }
 
 func (a *Auction) isExpired() bool {
-	return time.Now().After(a.endAt)
+	return a.clock.Now().After(a.endAt)
 }
 
 func (a *Auction) isClosed() bool {

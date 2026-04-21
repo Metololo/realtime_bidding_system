@@ -3,13 +3,16 @@ package domain
 import (
 	"errors"
 	"testing"
+	"time"
 
+	"github.com/Metololo/realtime_bidding_system/internal/testutils"
 	"github.com/google/uuid"
 )
 
 func TestNewAuctionGivenARequest(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	clock := testutils.NewFakeClock(time.Now())
+	auction, err := NewAuction(itemID, reservePrice, clock)
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -46,7 +49,7 @@ func TestNewAuctionGivenARequest(t *testing.T) {
 
 func TestNewAuctionSetsStatusOpen(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -59,7 +62,7 @@ func TestNewAuctionSetsStatusOpen(t *testing.T) {
 
 func TestNewAuctionSetsEndAtAfterConfiguredDuration(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -76,7 +79,7 @@ func TestNewAuctionReturnsErrorForNegativeReservePrice(t *testing.T) {
 	itemID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 	reservePrice := int64(-1)
 
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err == nil {
 		t.Fatalf("error is nil")
@@ -95,7 +98,7 @@ func TestNewAuctionReturnsErrorForZeroReservePrice(t *testing.T) {
 	itemID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 	reservePrice := int64(0)
 
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err == nil {
 		t.Fatalf("error is nil")
@@ -114,8 +117,7 @@ func TestNewAuctionReturnsErrorForNilItemID(t *testing.T) {
 	itemID := uuid.Nil
 	reservePrice := int64(10)
 
-	auction, err := NewAuction(itemID, reservePrice)
-
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 	if err == nil {
 		t.Fatalf("error is nil")
 	}
@@ -131,7 +133,7 @@ func TestNewAuctionReturnsErrorForNilItemID(t *testing.T) {
 
 func TestCloseAnExistingAuction(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -150,7 +152,7 @@ func TestCloseAnExistingAuction(t *testing.T) {
 
 func TestCannotCloseAnAlreadyClosedAuction(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -175,7 +177,7 @@ func TestCannotCloseAnAlreadyClosedAuction(t *testing.T) {
 
 func TestNewAuctionHasNoLeadingBid(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -188,7 +190,7 @@ func TestNewAuctionHasNoLeadingBid(t *testing.T) {
 
 func TestAuctionWinnerReturnsLeadingBid(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -223,7 +225,7 @@ func TestAuctionWinnerReturnsLeadingBid(t *testing.T) {
 
 func TestAuctionWinnerReturnsErrorIfAuctionIsNotClosed(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -241,7 +243,7 @@ func TestAuctionWinnerReturnsErrorIfAuctionIsNotClosed(t *testing.T) {
 
 func TestAuctionWinnerReturnsNilIfNoBidsPlaced(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)

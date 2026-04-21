@@ -3,8 +3,10 @@ package inmemory
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
+	"github.com/Metololo/realtime_bidding_system/internal/testutils"
 	"github.com/google/uuid"
 )
 
@@ -210,7 +212,7 @@ func newTestAuction(t *testing.T) *domain.Auction {
 	t.Helper()
 
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := domain.NewAuction(itemID, reservePrice)
+	auction, err := domain.NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

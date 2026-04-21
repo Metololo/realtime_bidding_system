@@ -1,7 +1,10 @@
 package application
 
 import (
+	"time"
+
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
+	"github.com/Metololo/realtime_bidding_system/internal/testutils"
 	"github.com/google/uuid"
 )
 
@@ -39,7 +42,7 @@ func NewAuctionService(activeAuctionManager ActiveAuctionManager) *AuctionServic
 }
 
 func (a *AuctionService) CreateAuction(auctionCommand CreateAuctionCommand) (*AuctionResult, error) {
-	auction, err := domain.NewAuction(auctionCommand.ItemID, auctionCommand.ReservePrice)
+	auction, err := domain.NewAuction(auctionCommand.ItemID, auctionCommand.ReservePrice, testutils.NewFakeClock(time.Now()))
 	if err != nil {
 		return nil, err
 	}

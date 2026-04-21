@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Metololo/realtime_bidding_system/internal/testutils"
 	"github.com/google/uuid"
 )
 
@@ -56,12 +57,19 @@ func TestAuctionPlaceBidReturnsErrorWhenAmountIsLowerThanReservePrice(t *testing
 }
 
 func TestAuctionPlaceBidReturnsErrorWhenAuctionIsExpired(t *testing.T) {
-	auction := newTestAuction(t)
+	fakeClock := testutils.NewFakeClock(time.Now())
+	itemID, reservePrice := newTestAuctionRequest()
+	auction, err := NewAuction(itemID, reservePrice, fakeClock)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	fakeClock.Advance(101 * time.Millisecond)
 
 	bidderID := uuid.MustParse("123e1234-e29b-41d4-a716-446655440000")
 	amount := int64(auction.reservePrice + 10)
 
-	auction.endAt = time.Now().Add(-100 * time.Millisecond)
 	bid, err := auction.PlaceBid(bidderID, amount)
 	if err == nil {
 		t.Fatal("error is nil")
@@ -74,6 +82,7 @@ func TestAuctionPlaceBidReturnsErrorWhenAuctionIsExpired(t *testing.T) {
 	if !errors.Is(err, ErrAuctionIsExpired) {
 		t.Fatalf("expected error ErrAuctionIsExpired, got %v", err)
 	}
+
 }
 
 func TestAuctionPlaceBidReturnsErrorWhenAuctionIsClosed(t *testing.T) {
@@ -171,7 +180,7 @@ func TestAuctionPlaceBidReturnsErrorWhenAmountEqualsLeadingBidAmount(t *testing.
 
 func TestAuctionPlaceBidAcceptsHigherAmountThanLeadingBid(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 
 	if err != nil {
 		t.Fatalf("error should be nil, got %v", err)
@@ -234,7 +243,7 @@ func newTestAuction(t *testing.T) *Auction {
 	t.Helper()
 
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := NewAuction(itemID, reservePrice)
+	auction, err := NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
