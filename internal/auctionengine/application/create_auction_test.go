@@ -5,13 +5,11 @@ import (
 	"testing"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
-	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/active_auction_manager/inmemory"
 	"github.com/google/uuid"
 )
 
 func TestCreateAuctionReturnsAuctionResult(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -36,8 +34,7 @@ func TestCreateAuctionReturnsAuctionResult(t *testing.T) {
 }
 
 func TestCreateAuctionSaveInRepository(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -56,8 +53,7 @@ func TestCreateAuctionSaveInRepository(t *testing.T) {
 }
 
 func TestCreateAuctionReturnsErrorIfItemIDIsNil(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionCommand.ItemID = uuid.Nil
@@ -79,8 +75,7 @@ func TestCreateAuctionReturnsErrorIfItemIDIsNil(t *testing.T) {
 }
 
 func TestCreateAuctionReturnsErrorIfReservePriceIsInvalid(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionCommand.ReservePrice = -1
@@ -99,11 +94,4 @@ func TestCreateAuctionReturnsErrorIfReservePriceIsInvalid(t *testing.T) {
 		t.Fatalf("expected error to be %v, got %v", domain.ErrInvalidReservePrice, err)
 	}
 
-}
-
-func newTestCreateAuctionCommand() CreateAuctionCommand {
-	return CreateAuctionCommand{
-		ItemID:       uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
-		ReservePrice: 100,
-	}
 }

@@ -3,17 +3,17 @@ package application
 import (
 	"errors"
 	"testing"
+	"time"
 
-	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/active_auction_manager/inmemory"
 	"github.com/Metololo/realtime_bidding_system/internal/testutils"
 	"github.com/google/uuid"
 )
 
-func TestCloseAuctionWithNoBidsSuccessfullyClosesAuction(t *testing.T) {
+func TestCreateAuctionSchedulesClosesAuction(t *testing.T) {
 	activeAuctionManager := inmemory.NewActiveAuctionManager()
 	fakeScheduler := &testutils.FakeManualScheduler{}
-	auctionService := NewAuctionService(activeAuctionManager, fakeScheduler, infrastructure.NewSystemClock())
+	auctionService := NewAuctionService(activeAuctionManager, fakeScheduler, testutils.NewFakeClock(time.Now()))
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -22,11 +22,11 @@ func TestCloseAuctionWithNoBidsSuccessfullyClosesAuction(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	err = auctionService.closeAuction(auctionResult.ID)
-
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	if len(fakeScheduler.ScheduledJobs) != 1 {
+		t.Fatalf("scheduled calls = %d, want 1", len(fakeScheduler.ScheduledJobs))
 	}
+
+	fakeScheduler.ExecuteLastScheduledTask()
 
 	_, err = activeAuctionManager.PlaceBid(auctionResult.ID, uuid.New(), 100)
 	if err == nil {
@@ -36,19 +36,11 @@ func TestCloseAuctionWithNoBidsSuccessfullyClosesAuction(t *testing.T) {
 	if !errors.Is(err, inmemory.ErrAuctionNotActive) {
 		t.Fatalf("expected error to be %v, got %v", inmemory.ErrAuctionNotActive, err)
 	}
-
 }
 
-func TestCloseNonExistentAuctionReturnsError(t *testing.T) {
-	auctionService := newTestAuctionService()
-
-	nonExistentAuctionID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
-
-	err := auctionService.closeAuction(nonExistentAuctionID)
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !errors.Is(err, inmemory.ErrAuctionNotActive) {
-		t.Fatalf("expected error to be %v, got %v", inmemory.ErrAuctionNotActive, err)
+func newTestCreateAuctionCommand() CreateAuctionCommand {
+	return CreateAuctionCommand{
+		ItemID:       uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
+		ReservePrice: 100,
 	}
 }

@@ -1,15 +1,14 @@
 package application
 
 import (
-	"time"
-
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
-	"github.com/Metololo/realtime_bidding_system/internal/testutils"
 	"github.com/google/uuid"
 )
 
 type AuctionService struct {
 	activeAuctionManager ActiveAuctionManager
+	scheduler            Scheduler
+	clock                domain.Clock
 }
 
 type CreateAuctionCommand struct {
@@ -35,19 +34,31 @@ type BidResult struct {
 	Amount    int64
 }
 
-func NewAuctionService(activeAuctionManager ActiveAuctionManager) *AuctionService {
+func NewAuctionService(activeAuctionManager ActiveAuctionManager, scheduler Scheduler, clock domain.Clock) *AuctionService {
 	return &AuctionService{
 		activeAuctionManager: activeAuctionManager,
+		scheduler:            scheduler,
+		clock:                clock,
 	}
 }
 
 func (a *AuctionService) CreateAuction(auctionCommand CreateAuctionCommand) (*AuctionResult, error) {
-	auction, err := domain.NewAuction(auctionCommand.ItemID, auctionCommand.ReservePrice, testutils.NewFakeClock(time.Now()))
+	auction, err := domain.NewAuction(auctionCommand.ItemID, auctionCommand.ReservePrice, a.clock)
 	if err != nil {
 		return nil, err
 	}
 
 	err = a.activeAuctionManager.Save(auction)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.scheduler.Schedule(auction.EndTime(), func() {
+		err = a.closeAuction(auction.ID())
+		if err != nil {
+			_ = err // TODO: idk what to do with it yet, retry ?
+		}
+	})
 	if err != nil {
 		return nil, err
 	}

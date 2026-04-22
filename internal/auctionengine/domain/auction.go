@@ -55,6 +55,10 @@ func (a *Auction) LeadingBid() *Bid {
 	return a.leadingBid
 }
 
+func (a *Auction) EndTime() time.Time {
+	return a.endAt
+}
+
 func NewAuction(itemID uuid.UUID, reservePrice int64, clock Clock) (*Auction, error) {
 	if reservePrice <= 0 {
 		return nil, ErrInvalidReservePrice

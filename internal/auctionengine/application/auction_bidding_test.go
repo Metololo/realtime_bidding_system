@@ -3,15 +3,16 @@ package application
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/active_auction_manager/inmemory"
+	"github.com/Metololo/realtime_bidding_system/internal/testutils"
 	"github.com/google/uuid"
 )
 
 func TestPlaceBidAcceptsValidBid(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -45,8 +46,7 @@ func TestPlaceBidAcceptsValidBid(t *testing.T) {
 }
 
 func TestPlaceBidWithInvalidAuctionIDReturnsError(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	bidCommand := newTestPlaceBidCommand(uuid.MustParse("00000000-0000-0000-0000-000000000000"))
 	_, err := auctionService.PlaceBid(bidCommand)
@@ -61,8 +61,7 @@ func TestPlaceBidWithInvalidAuctionIDReturnsError(t *testing.T) {
 }
 
 func TestPlaceBidWithAmountLessThanReservePriceReturnsError(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -85,8 +84,7 @@ func TestPlaceBidWithAmountLessThanReservePriceReturnsError(t *testing.T) {
 }
 
 func TestPlaceBidWithAmountLessThanCurrentLeadingBidReturnsError(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -118,8 +116,7 @@ func TestPlaceBidWithAmountLessThanCurrentLeadingBidReturnsError(t *testing.T) {
 }
 
 func TestPlaceBidOnRemovedAuctionReturnsNotFound(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -146,8 +143,7 @@ func TestPlaceBidOnRemovedAuctionReturnsNotFound(t *testing.T) {
 }
 
 func TestPlaceBidWithEqualAmountToCurrentLeadingBidReturnsError(t *testing.T) {
-	activeAuctionManager := inmemory.NewActiveAuctionManager()
-	auctionService := NewAuctionService(activeAuctionManager)
+	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -184,4 +180,11 @@ func newTestPlaceBidCommand(auctionID uuid.UUID) BidCommand {
 		BidderID:  uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
 		Amount:    150,
 	}
+}
+
+func newTestAuctionService() *AuctionService {
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	fakeScheduler := &testutils.FakeManualScheduler{}
+	fakeClock := testutils.NewFakeClock(time.Now())
+	return NewAuctionService(activeAuctionManager, fakeScheduler, fakeClock)
 }
