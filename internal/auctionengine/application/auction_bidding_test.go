@@ -1,10 +1,11 @@
-package application
+package application_test
 
 import (
 	"errors"
 	"testing"
 	"time"
 
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/application"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/active_auction_manager/inmemory"
 	"github.com/Metololo/realtime_bidding_system/internal/testutils"
@@ -125,7 +126,7 @@ func TestPlaceBidOnRemovedAuctionReturnsNotFound(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	err = auctionService.closeAuction(auctionResult.ID)
+	err = auctionService.CloseAuctionForTest(auctionResult.ID)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -174,17 +175,17 @@ func TestPlaceBidWithEqualAmountToCurrentLeadingBidReturnsError(t *testing.T) {
 	}
 }
 
-func newTestPlaceBidCommand(auctionID uuid.UUID) BidCommand {
-	return BidCommand{
+func newTestPlaceBidCommand(auctionID uuid.UUID) application.BidCommand {
+	return application.BidCommand{
 		AuctionID: auctionID,
 		BidderID:  uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
 		Amount:    150,
 	}
 }
 
-func newTestAuctionService() *AuctionService {
+func newTestAuctionService() *application.AuctionService {
 	activeAuctionManager := inmemory.NewActiveAuctionManager()
 	fakeScheduler := &testutils.FakeManualScheduler{}
 	fakeClock := testutils.NewFakeClock(time.Now())
-	return NewAuctionService(activeAuctionManager, fakeScheduler, fakeClock)
+	return application.NewAuctionService(activeAuctionManager, fakeScheduler, fakeClock, &testutils.FakeEventPublisher{})
 }

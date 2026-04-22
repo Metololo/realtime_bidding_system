@@ -1,9 +1,10 @@
-package application
+package application_test
 
 import (
 	"errors"
 	"testing"
 
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/application"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/active_auction_manager/inmemory"
 	"github.com/Metololo/realtime_bidding_system/internal/testutils"
@@ -13,7 +14,11 @@ import (
 func TestCloseAuctionWithNoBidsSuccessfullyClosesAuction(t *testing.T) {
 	activeAuctionManager := inmemory.NewActiveAuctionManager()
 	fakeScheduler := &testutils.FakeManualScheduler{}
-	auctionService := NewAuctionService(activeAuctionManager, fakeScheduler, infrastructure.NewSystemClock())
+	auctionService := application.NewAuctionService(
+		activeAuctionManager,
+		fakeScheduler,
+		infrastructure.NewSystemClock(),
+		&testutils.FakeEventPublisher{})
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -22,7 +27,7 @@ func TestCloseAuctionWithNoBidsSuccessfullyClosesAuction(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	err = auctionService.closeAuction(auctionResult.ID)
+	err = auctionService.CloseAuctionForTest(auctionResult.ID)
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -44,7 +49,7 @@ func TestCloseNonExistentAuctionReturnsError(t *testing.T) {
 
 	nonExistentAuctionID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 
-	err := auctionService.closeAuction(nonExistentAuctionID)
+	err := auctionService.CloseAuctionForTest(nonExistentAuctionID)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

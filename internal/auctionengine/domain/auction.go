@@ -55,8 +55,16 @@ func (a *Auction) LeadingBid() *Bid {
 	return a.leadingBid
 }
 
+func (a *Auction) StartTime() time.Time {
+	return a.startAt
+}
+
 func (a *Auction) EndTime() time.Time {
 	return a.endAt
+}
+
+func (a *Auction) Status() AuctionStatus {
+	return a.status
 }
 
 func NewAuction(itemID uuid.UUID, reservePrice int64, clock Clock) (*Auction, error) {

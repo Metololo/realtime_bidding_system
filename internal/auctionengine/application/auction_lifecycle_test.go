@@ -1,10 +1,11 @@
-package application
+package application_test
 
 import (
 	"errors"
 	"testing"
 	"time"
 
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/application"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/active_auction_manager/inmemory"
 	"github.com/Metololo/realtime_bidding_system/internal/testutils"
 	"github.com/google/uuid"
@@ -13,7 +14,11 @@ import (
 func TestCreateAuctionSchedulesClosesAuction(t *testing.T) {
 	activeAuctionManager := inmemory.NewActiveAuctionManager()
 	fakeScheduler := &testutils.FakeManualScheduler{}
-	auctionService := NewAuctionService(activeAuctionManager, fakeScheduler, testutils.NewFakeClock(time.Now()))
+	auctionService := application.NewAuctionService(
+		activeAuctionManager,
+		fakeScheduler,
+		testutils.NewFakeClock(time.Now()),
+		&testutils.FakeEventPublisher{})
 
 	auctionCommand := newTestCreateAuctionCommand()
 	auctionResult, err := auctionService.CreateAuction(auctionCommand)
@@ -38,8 +43,8 @@ func TestCreateAuctionSchedulesClosesAuction(t *testing.T) {
 	}
 }
 
-func newTestCreateAuctionCommand() CreateAuctionCommand {
-	return CreateAuctionCommand{
+func newTestCreateAuctionCommand() application.CreateAuctionCommand {
+	return application.CreateAuctionCommand{
 		ItemID:       uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
 		ReservePrice: 100,
 	}
