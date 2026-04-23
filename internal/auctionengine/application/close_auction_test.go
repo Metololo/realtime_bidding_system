@@ -27,7 +27,7 @@ func TestCloseAuctionWithNoBidsSuccessfullyClosesAuction(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	err = auctionService.CloseAuctionForTest(auctionResult.ID)
+	err = auctionService.CloseAuction(auctionResult.ID)
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -49,7 +49,7 @@ func TestCloseNonExistentAuctionReturnsError(t *testing.T) {
 
 	nonExistentAuctionID := uuid.MustParse("00000000-0000-0000-0000-000000000000")
 
-	err := auctionService.CloseAuctionForTest(nonExistentAuctionID)
+	err := auctionService.CloseAuction(nonExistentAuctionID)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

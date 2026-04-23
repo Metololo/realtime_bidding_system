@@ -33,21 +33,35 @@ type AuctionCreatedEvent struct {
 	ItemID       uuid.UUID
 	ReservePrice int64
 	StartedAt    time.Time
-	EndedAt      time.Time
+	EndAt        time.Time
 }
 
 func (AuctionCreatedEvent) EventType() EventType {
 	return EventAuctionCreated
 }
 
+type AuctionOutcome string
+
+const (
+	AuctionOutcomeSold   AuctionOutcome = "sold"
+	AuctionOutcomeNoBids AuctionOutcome = "no_bids"
+)
+
 type AuctionClosedEvent struct {
 	BaseEvent
-	AuctionID  uuid.UUID
-	ClosedAt   time.Time
-	WinnerID   *uuid.UUID
-	WinningBid *int64
+	AuctionID uuid.UUID
+	ItemID    uuid.UUID
+	Outcome   AuctionOutcome
+	ClosedAt  time.Time
+	Winner    *WinnerInfo
 }
 
 func (AuctionClosedEvent) EventType() EventType {
 	return EventAuctionClosed
+
+}
+
+type WinnerInfo struct {
+	BidderID uuid.UUID
+	Amount   int64
 }

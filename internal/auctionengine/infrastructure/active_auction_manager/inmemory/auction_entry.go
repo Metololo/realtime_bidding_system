@@ -5,6 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/application"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
 	"github.com/google/uuid"
 )
@@ -57,25 +58,33 @@ func (a *auctionEntry) PlaceBid(bidderID uuid.UUID, amount int64) (*domain.Bid, 
 	return bid, nil
 }
 
-func (a *auctionEntry) CloseAuction() (*domain.Bid, error) {
-
+func (a *auctionEntry) CloseAuction() (application.CloseAuctionResult, error) {
 	if !a.TrySetClosing() {
-		return nil, ErrAuctionAlreadyClosing
+		return application.CloseAuctionResult{}, ErrAuctionAlreadyClosing
 	}
 
 	a.Lock()
 	defer a.Unlock()
 
-	auction := a.auction
-	err := auction.Close()
+	err := a.auction.Close()
 	if err != nil {
-		return nil, err
+		return application.CloseAuctionResult{}, err
 	}
 
-	winnerBid, err := auction.Winner()
-	if err != nil {
-		return nil, err
+	winnerBid, _ := a.auction.Winner()
+
+	var winnerInfo *domain.WinnerInfo
+	if winnerBid != nil {
+		winnerInfo = &domain.WinnerInfo{
+			BidderID: winnerBid.BidderID(),
+			Amount:   winnerBid.Amount(),
+		}
 	}
 
-	return winnerBid, nil
+	return application.CloseAuctionResult{
+		AuctionID:  a.auction.ID(),
+		ItemID:     a.auction.ItemID(),
+		ClosedAt:   a.auction.ClosedAt(),
+		WinnerInfo: winnerInfo,
+	}, nil
 }

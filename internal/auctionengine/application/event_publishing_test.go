@@ -21,7 +21,7 @@ func TestCreateAuctionPublishEvent(t *testing.T) {
 	itemId := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 	reservePrice := int64(100)
 
-	_, err := auctionService.CreateAuction(application.CreateAuctionCommand{
+	auctionResult, err := auctionService.CreateAuction(application.CreateAuctionCommand{
 		ItemID:       itemId,
 		ReservePrice: reservePrice,
 	})
@@ -54,7 +54,9 @@ func TestCreateAuctionPublishEvent(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected event to be of type %T, got %T", &domain.AuctionCreatedEvent{}, eventReceived)
 	}
-
+	if createEvent.AuctionID != auctionResult.ID {
+		t.Fatalf("expected event to have auction ID %v, got %v", auctionResult.ID, createEvent.AuctionID)
+	}
 	if createEvent.ItemID != itemId {
 		t.Fatalf("expected event to have item ID %v, got %v", itemId, createEvent.ItemID)
 	}
@@ -64,7 +66,188 @@ func TestCreateAuctionPublishEvent(t *testing.T) {
 	if createEvent.StartedAt != fakeClock.Now() {
 		t.Fatalf("expected event to have started at %v, got %v", fakeClock.Now(), createEvent.StartedAt)
 	}
-	if createEvent.EndedAt != fakeClock.Now().Add(100*time.Millisecond) {
-		t.Fatalf("expected event to have ended at %v, got %v", fakeClock.Now().Add(100*time.Millisecond), createEvent.EndedAt)
+	if createEvent.EndAt != fakeClock.Now().Add(100*time.Millisecond) {
+		t.Fatalf("expected event to have ended at %v, got %v", fakeClock.Now().Add(100*time.Millisecond), createEvent.EndAt)
+	}
+}
+
+func TestCreateAuctionDontPublishEventWhenError(t *testing.T) {
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	fakeScheduler := &testutils.FakeManualScheduler{}
+	fakeEventPublisher := &testutils.FakeEventPublisher{}
+	fakeClock := testutils.NewFakeClock(time.Now())
+	auctionService := application.NewAuctionService(activeAuctionManager, fakeScheduler, fakeClock, fakeEventPublisher)
+
+	itemId := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+	reservePrice := int64(-599)
+
+	_, err := auctionService.CreateAuction(application.CreateAuctionCommand{
+		ItemID:       itemId,
+		ReservePrice: reservePrice,
+	})
+
+	if err == nil {
+		t.Fatalf("expected error, but error is nil")
+	}
+
+	if len(fakeEventPublisher.EventsPublished) > 0 {
+		t.Fatalf("expected 0 event to be published, got %d", len(fakeEventPublisher.EventsPublished))
+	}
+
+}
+
+func TestCloseAuctionPublishEventWithBid(t *testing.T) {
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	fakeScheduler := &testutils.FakeManualScheduler{}
+	fakeEventPublisher := &testutils.FakeEventPublisher{}
+	fakeClock := testutils.NewFakeClock(time.Now())
+	auctionService := application.NewAuctionService(activeAuctionManager, fakeScheduler, fakeClock, fakeEventPublisher)
+
+	itemId := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+	reservePrice := int64(150)
+
+	auctionResult, err := auctionService.CreateAuction(application.CreateAuctionCommand{
+		ItemID:       itemId,
+		ReservePrice: reservePrice,
+	})
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	bidderID := uuid.MustParse("123e1234-e29b-41d4-a716-446655440000")
+	amount := int64(150)
+
+	bidResult, err := auctionService.PlaceBid(application.BidCommand{AuctionID: auctionResult.ID, BidderID: bidderID, Amount: amount})
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	fakeEventPublisher.Reset()
+	err = auctionService.CloseAuction(auctionResult.ID)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(fakeEventPublisher.EventsPublished) != 1 {
+		t.Fatalf("expected 1 event to be published, got %d", len(fakeEventPublisher.EventsPublished))
+	}
+
+	eventReceived := fakeEventPublisher.EventsPublished[0]
+
+	if eventReceived == nil {
+		t.Fatal("expected event to be published, got nil")
+	}
+
+	if eventReceived.EventID() == uuid.Nil {
+		t.Fatal("expected event to have a non-nil ID")
+	}
+	if eventReceived.OccurredAt() != fakeClock.Now() {
+		t.Fatalf("expected event to have occurred at %v, got %v", fakeClock.Now(), eventReceived.OccurredAt())
+	}
+	if eventReceived.EventType() != domain.EventAuctionClosed {
+		t.Fatalf("expected event to have type %v, got %v", domain.EventAuctionCreated, eventReceived.EventType())
+	}
+
+	closeEvent, ok := eventReceived.(domain.AuctionClosedEvent)
+	if !ok {
+		t.Fatalf("expected event to be of type %T, got %T", &domain.AuctionClosedEvent{}, eventReceived)
+	}
+	if closeEvent.AuctionID != auctionResult.ID {
+		t.Fatalf("expected event to have auction ID %v, got %v", auctionResult.ID, closeEvent.AuctionID)
+	}
+	if closeEvent.Outcome != domain.AuctionOutcomeSold {
+		t.Fatalf("expected event outcome to be %v, got %v", domain.AuctionOutcomeSold, closeEvent.Outcome)
+	}
+	if closeEvent.Winner == nil {
+		t.Fatal("expected event to have a winner, but winner is nil")
+	}
+	if closeEvent.Winner.BidderID != bidResult.BidderID {
+		t.Fatalf("expected event winner bidder id to be %v, got %v", bidResult.BidderID, closeEvent.Winner.BidderID)
+	}
+	if closeEvent.Winner.Amount != bidResult.Amount {
+		t.Fatalf("expected event winner amount to be %v, got %v", bidResult.Amount, closeEvent.Winner.Amount)
+	}
+}
+
+func TestCloseAuctionPublishEventWithNoBid(t *testing.T) {
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	fakeScheduler := &testutils.FakeManualScheduler{}
+	fakeEventPublisher := &testutils.FakeEventPublisher{}
+	fakeClock := testutils.NewFakeClock(time.Now())
+	auctionService := application.NewAuctionService(activeAuctionManager, fakeScheduler, fakeClock, fakeEventPublisher)
+
+	itemId := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+	reservePrice := int64(150)
+
+	auctionResult, err := auctionService.CreateAuction(application.CreateAuctionCommand{
+		ItemID:       itemId,
+		ReservePrice: reservePrice,
+	})
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	fakeEventPublisher.Reset()
+	err = auctionService.CloseAuction(auctionResult.ID)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(fakeEventPublisher.EventsPublished) != 1 {
+		t.Fatalf("expected 1 event to be published, got %d", len(fakeEventPublisher.EventsPublished))
+	}
+
+	eventReceived := fakeEventPublisher.EventsPublished[0]
+
+	if eventReceived == nil {
+		t.Fatal("expected event to be published, got nil")
+	}
+
+	if eventReceived.EventID() == uuid.Nil {
+		t.Fatal("expected event to have a non-nil ID")
+	}
+	if eventReceived.OccurredAt() != fakeClock.Now() {
+		t.Fatalf("expected event to have occurred at %v, got %v", fakeClock.Now(), eventReceived.OccurredAt())
+	}
+	if eventReceived.EventType() != domain.EventAuctionClosed {
+		t.Fatalf("expected event to have type %v, got %v", domain.EventAuctionCreated, eventReceived.EventType())
+	}
+
+	closeEvent, ok := eventReceived.(domain.AuctionClosedEvent)
+	if !ok {
+		t.Fatalf("expected event to be of type %T, got %T", &domain.AuctionClosedEvent{}, eventReceived)
+	}
+	if closeEvent.AuctionID != auctionResult.ID {
+		t.Fatalf("expected event to have auction ID %v, got %v", auctionResult.ID, closeEvent.AuctionID)
+	}
+	if closeEvent.Outcome != domain.AuctionOutcomeNoBids {
+		t.Fatalf("expected event outcome to be %v, got %v", domain.AuctionOutcomeNoBids, closeEvent.Outcome)
+	}
+	if closeEvent.Winner != nil {
+		t.Fatalf("expected event to have a no winner, but winner is %v", closeEvent.Winner)
+	}
+}
+
+func TestCloseAuctionWithErrorDontPublishEvent(t *testing.T) {
+	activeAuctionManager := inmemory.NewActiveAuctionManager()
+	fakeScheduler := &testutils.FakeManualScheduler{}
+	fakeEventPublisher := &testutils.FakeEventPublisher{}
+	fakeClock := testutils.NewFakeClock(time.Now())
+	auctionService := application.NewAuctionService(activeAuctionManager, fakeScheduler, fakeClock, fakeEventPublisher)
+
+	itemId := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+	err := auctionService.CloseAuction(itemId)
+
+	if err == nil {
+		t.Fatal("expected error, but error is nil")
+	}
+
+	if len(fakeEventPublisher.EventsPublished) > 0 {
+		t.Fatalf("expected 0 event to be published, got %d", len(fakeEventPublisher.EventsPublished))
 	}
 }

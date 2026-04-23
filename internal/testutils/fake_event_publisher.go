@@ -10,3 +10,7 @@ func (f *FakeEventPublisher) Publish(event domain.Event) error {
 	f.EventsPublished = append(f.EventsPublished, event)
 	return nil
 }
+
+func (f *FakeEventPublisher) Reset() {
+	f.EventsPublished = []domain.Event{}
+}

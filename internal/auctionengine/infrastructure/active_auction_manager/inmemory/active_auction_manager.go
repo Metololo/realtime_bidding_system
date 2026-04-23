@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/application"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
 	"github.com/google/uuid"
 )
@@ -57,21 +58,21 @@ func (r *ActiveAuctionManager) PlaceBid(id uuid.UUID, bidderID uuid.UUID, amount
 	return bid, nil
 }
 
-func (r *ActiveAuctionManager) CloseAuction(id uuid.UUID) (*domain.Bid, error) {
+func (r *ActiveAuctionManager) CloseAuction(id uuid.UUID) (application.CloseAuctionResult, error) {
 
 	auctionEntry, err := r.findEntryById(id)
 	if err != nil {
-		return nil, err
+		return application.CloseAuctionResult{}, err
 	}
 
 	closeAuctionResult, err := auctionEntry.CloseAuction()
 	if err != nil {
-		return nil, err
+		return application.CloseAuctionResult{}, err
 	}
 
 	err = r.deleteByID(id)
 	if err != nil {
-		return nil, err
+		return application.CloseAuctionResult{}, err
 	}
 
 	return closeAuctionResult, nil

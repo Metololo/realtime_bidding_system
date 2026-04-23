@@ -140,13 +140,13 @@ func TestActiveAuctionManagerCloseAuction(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	winnerBid, err := auctionStore.CloseAuction(auction.ID())
+	auctionResult, err := auctionStore.CloseAuction(auction.ID())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if winnerBid != nil {
-		t.Fatalf("expected winner bid to be nil, got %v", winnerBid)
+	if auctionResult.WinnerInfo != nil {
+		t.Fatalf("expected winner bid to be nil, got %v", auctionResult)
 	}
 }
 
@@ -190,21 +190,21 @@ func TestActiveAuctionReturnWinningBidOnClosedAuction(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	winnerBid, err := auctionStore.CloseAuction(auction.ID())
+	closeAuctionResult, err := auctionStore.CloseAuction(auction.ID())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if winnerBid == nil {
+	if closeAuctionResult.WinnerInfo == nil {
 		t.Fatal("expected winning bid to be not nil")
 	}
 
-	if winnerBid.BidderID() != bidder2ID {
-		t.Fatalf("expected winning bidder ID to be %v, got %v", bidder2ID, winnerBid.BidderID())
+	if closeAuctionResult.WinnerInfo.BidderID != bidder2ID {
+		t.Fatalf("expected winning bidder ID to be %v, got %v", bidder2ID, closeAuctionResult.WinnerInfo.BidderID)
 	}
 
-	if winnerBid.Amount() != bidAmount+70 {
-		t.Fatalf("expected winning bid amount to be %v, got %v", bidAmount+70, winnerBid.Amount())
+	if closeAuctionResult.WinnerInfo.Amount != bidAmount+70 {
+		t.Fatalf("expected winning bid amount to be %v, got %v", bidAmount+70, closeAuctionResult.WinnerInfo.Amount)
 	}
 }
 

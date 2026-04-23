@@ -27,6 +27,13 @@ type AuctionResult struct {
 	EndTime      time.Time
 }
 
+type CloseAuctionResult struct {
+	AuctionID  uuid.UUID
+	ItemID     uuid.UUID
+	ClosedAt   time.Time
+	WinnerInfo *domain.WinnerInfo
+}
+
 type BidCommand struct {
 	AuctionID uuid.UUID
 	BidderID  uuid.UUID
@@ -94,16 +101,16 @@ func (a *AuctionService) scheduleCloseAuction(auctionId uuid.UUID, endTime time.
 
 func (a *AuctionService) closeAuction(id uuid.UUID) error {
 
-	winner, err := a.activeAuctionManager.CloseAuction(id)
+	closeAuctionResult, err := a.activeAuctionManager.CloseAuction(id)
 	if err != nil {
 		return err
 	}
 
-	// TODO: publish winner to bidders
-	_ = winner
-
+	err = a.publishAuctionClosedEvent(closeAuctionResult)
+	if err != nil {
+		return err
+	}
 	return nil
-
 }
 
 func (a *AuctionService) publishAuctionCreatedEvent(auction *domain.Auction) error {
@@ -113,7 +120,21 @@ func (a *AuctionService) publishAuctionCreatedEvent(auction *domain.Auction) err
 		ItemID:       auction.ItemID(),
 		ReservePrice: auction.ReservePrice(),
 		StartedAt:    auction.StartTime(),
-		EndedAt:      auction.EndTime(),
+		EndAt:        auction.EndTime(),
+	})
+}
+
+func (a *AuctionService) publishAuctionClosedEvent(closeAuctionResult CloseAuctionResult) error {
+
+	outcome := deriveOutcome(closeAuctionResult.WinnerInfo)
+
+	return a.eventPublisher.Publish(domain.AuctionClosedEvent{
+		BaseEvent: domain.BaseEvent{ID: uuid.New(), At: a.clock.Now()},
+		AuctionID: closeAuctionResult.AuctionID,
+		ItemID:    closeAuctionResult.ItemID,
+		Outcome:   outcome,
+		ClosedAt:  closeAuctionResult.ClosedAt,
+		Winner:    closeAuctionResult.WinnerInfo,
 	})
 }
 
@@ -130,4 +151,11 @@ func (a *AuctionService) PlaceBid(bidCommand BidCommand) (*BidResult, error) {
 		BidderID:  bid.BidderID(),
 		Amount:    bid.Amount(),
 	}, nil
+}
+
+func deriveOutcome(winner *domain.WinnerInfo) domain.AuctionOutcome {
+	if winner == nil {
+		return domain.AuctionOutcomeNoBids
+	}
+	return domain.AuctionOutcomeSold
 }

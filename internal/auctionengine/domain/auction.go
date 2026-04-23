@@ -33,6 +33,7 @@ type Auction struct {
 	reservePrice int64
 	startAt      time.Time
 	endAt        time.Time
+	closedAt     time.Time
 	status       AuctionStatus
 	leadingBid   *Bid
 	bidsPlaced   []Bid
@@ -67,6 +68,10 @@ func (a *Auction) Status() AuctionStatus {
 	return a.status
 }
 
+func (a *Auction) ClosedAt() time.Time {
+	return a.closedAt
+}
+
 func NewAuction(itemID uuid.UUID, reservePrice int64, clock Clock) (*Auction, error) {
 	if reservePrice <= 0 {
 		return nil, ErrInvalidReservePrice
@@ -97,6 +102,7 @@ func (a *Auction) Close() error {
 	}
 
 	a.status = StatusClosed
+	a.closedAt = a.clock.Now()
 	return nil
 }
 

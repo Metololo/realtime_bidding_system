@@ -46,6 +46,10 @@ func TestNewAuctionGivenARequest(t *testing.T) {
 	if auction.EndTime().IsZero() {
 		t.Fatal("expected endAt to be set")
 	}
+
+	if !auction.ClosedAt().IsZero() {
+		t.Fatal("expected closeAt to have zero value")
+	}
 }
 
 func TestNewAuctionSetsStatusOpen(t *testing.T) {
@@ -134,10 +138,15 @@ func TestNewAuctionReturnsErrorForNilItemID(t *testing.T) {
 
 func TestCloseAnExistingAuction(t *testing.T) {
 	itemID, reservePrice := newTestAuctionRequest()
-	auction, err := domain.NewAuction(itemID, reservePrice, testutils.NewFakeClock(time.Now()))
+	fakeClock := testutils.NewFakeClock(time.Now())
+	auction, err := domain.NewAuction(itemID, reservePrice, fakeClock)
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if !auction.ClosedAt().IsZero() {
+		t.Fatal("expected auction closeAt to have zero value")
 	}
 
 	err = auction.Close()
@@ -148,6 +157,14 @@ func TestCloseAnExistingAuction(t *testing.T) {
 
 	if auction.Status() != domain.StatusClosed {
 		t.Fatal("expected auction status to be CLOSED")
+	}
+
+	if auction.ClosedAt().IsZero() {
+		t.Fatal("expected auction closeAt to be set")
+	}
+
+	if auction.ClosedAt() != fakeClock.Now() {
+		t.Fatalf("expected auction closeAt to be %v, got %v", fakeClock.Now(), auction.ClosedAt())
 	}
 }
 

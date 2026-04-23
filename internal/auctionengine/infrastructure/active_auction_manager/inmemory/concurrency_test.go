@@ -60,15 +60,12 @@ func TestActiveAuctionManagerPlaceBidConcurrentSameAuction(t *testing.T) {
 		t.Fatal("expected at least one accepted bid")
 	}
 
-	winner, err := manager.CloseAuction(auction.ID())
+	closeAuctionResult, err := manager.CloseAuction(auction.ID())
 	if err != nil {
 		t.Fatalf("CloseAuction() error = %v", err)
 	}
-	if winner == nil {
-		t.Fatal("winner is nil")
-	}
 
-	if got, want := winner.Amount(), maxAccepted; got != want {
+	if got, want := closeAuctionResult.WinnerInfo.Amount, maxAccepted; got != want {
 		t.Fatalf("winner amount = %d, want %d", got, want)
 	}
 }
@@ -106,7 +103,7 @@ func TestActiveAuctionManager_PlaceBid_And_CloseAuction_Concurrent(t *testing.T)
 	}
 
 	var (
-		closeWinner *domain.Bid
+		closeWinner *domain.WinnerInfo
 		closeErr    error
 	)
 
@@ -115,7 +112,9 @@ func TestActiveAuctionManager_PlaceBid_And_CloseAuction_Concurrent(t *testing.T)
 		defer wg.Done()
 		<-start
 
-		closeWinner, closeErr = manager.CloseAuction(auction.ID())
+		auctionResult, err := manager.CloseAuction(auction.ID())
+		closeErr = err
+		closeWinner = auctionResult.WinnerInfo
 	}()
 
 	close(start)
@@ -204,19 +203,15 @@ func TestActiveAuctionManager_PlaceBid_Concurrent_MultipleAuctions(t *testing.T)
 			t.Fatalf("auction %s had no accepted bids", st.id)
 		}
 
-		winner, err := manager.CloseAuction(st.id)
+		closeAuctionResult, err := manager.CloseAuction(st.id)
 		if err != nil {
 			t.Fatalf("CloseAuction(%s) error = %v", st.id, err)
 		}
-		if winner == nil {
-			t.Fatalf("CloseAuction(%s) winner is nil", st.id)
-		}
-
 		st.mu.Lock()
 		want := st.maxAccepted
 		st.mu.Unlock()
 
-		if got := winner.Amount(); got != want {
+		if got := closeAuctionResult.WinnerInfo.Amount; got != want {
 			t.Fatalf("auction %s winner amount = %d, want %d", st.id, got, want)
 		}
 	}

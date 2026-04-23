@@ -126,7 +126,7 @@ func TestPlaceBidOnRemovedAuctionReturnsNotFound(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	err = auctionService.CloseAuctionForTest(auctionResult.ID)
+	err = auctionService.CloseAuction(auctionResult.ID)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
