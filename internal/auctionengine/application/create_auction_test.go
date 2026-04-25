@@ -33,7 +33,7 @@ func TestCreateAuctionReturnsAuctionResult(t *testing.T) {
 
 }
 
-func TestCreateAuctionSaveInRepository(t *testing.T) {
+func TestCreateAuctionSaveInAuctionManager(t *testing.T) {
 	auctionService := newTestAuctionService()
 
 	auctionCommand := newTestCreateAuctionCommand()
