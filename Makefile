@@ -4,12 +4,16 @@
 
 help:
 	@echo "Available commands:"
-	@echo "  make fmt           - Format all code (gofmt)"
-	@echo "  make lint          - Run linter on the whole project"
-	@echo "  make fix           - Auto-fix fmt and lint issues (Global)"
-	@echo "  make check         - CI mode: Check without fixing"
-	@echo "  make install-hooks - Setup the git pre-commit hook"
-	@echo "  make test          - Run tests with race detection"
+	@echo "  make fmt             - Format all code (gofmt)"
+	@echo "  make lint            - Run linter on the whole project"
+	@echo "  make fix             - Auto-fix fmt and lint issues (Global)"
+	@echo "  make check           - CI mode: Check without fixing"
+	@echo "  make install-hooks   - Setup the git pre-commit hook"
+	@echo "  make test            - Run tests with race detection"
+	@echo "  make auction-engine  - Run auction engine"
+
+auction-engine:
+	go run ./cmd/auction-engine
 
 test:
 	go test -v -race ./... | grep -E "PASS|FAIL|ok"
