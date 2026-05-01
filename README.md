@@ -197,7 +197,7 @@ A good practical setup is:
 
 ## Replay / Inspection App
 
-A replay UI can still make sense, but it should not try to fully replay every event from every run by default.
+A replay UI can still make sense, but it should not try to fully replay every event from every run by default..
 
 A better direction is:
 - show aggregate metrics and benchmark summaries
