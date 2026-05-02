@@ -2,20 +2,22 @@ package infrastructure
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/application"
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
+	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure/active_auction_manager/inmemory"
 	"github.com/google/uuid"
 )
 
 type AuctionCreatorHTTP struct {
-	auctionCreator application.AuctionCreator
+	auctionService application.AuctionCreator
 }
 
-func NewAuctionCreatorHTTP(auctionCreator application.AuctionCreator) *AuctionCreatorHTTP {
+func NewAuctionCreatorHTTP(auctionService application.AuctionCreator) *AuctionCreatorHTTP {
 	return &AuctionCreatorHTTP{
-		auctionCreator: auctionCreator,
+		auctionService: auctionService,
 	}
 }
 
@@ -25,14 +27,25 @@ type CreateAuctionRequest struct {
 }
 
 func (a *AuctionCreatorHTTP) createAuction(w http.ResponseWriter, r *http.Request) {
-	fmt.Print("testttt")
-	auctionResult, err := a.auctionCreator.CreateAuction(application.CreateAuctionCommand{
-		ItemID:       uuid.New(),
-		ReservePrice: 100,
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req CreateAuctionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+	}
+
+	auctionResult, err := a.auctionService.CreateAuction(application.CreateAuctionCommand{
+		ItemID:       req.ItemID,
+		ReservePrice: req.ReservePrice,
 	})
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		status, errMessage := mapErrorToHTTP(err)
+		http.Error(w, errMessage, status)
 		return
 	}
 
@@ -44,8 +57,21 @@ func (a *AuctionCreatorHTTP) createAuction(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (a *AuctionCreatorHTTP) StartHTTPServer() error {
+func (a *AuctionCreatorHTTP) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", a.createAuction)
-	return http.ListenAndServe(":8080", mux)
+	return mux
+}
+
+func mapErrorToHTTP(err error) (int, string) {
+	switch {
+	case errors.Is(err, domain.ErrInvalidReservePrice),
+		errors.Is(err, domain.ErrNilItemID),
+		errors.Is(err, inmemory.ErrAuctionAlreadyExists),
+		errors.Is(err, inmemory.ErrAuctionNotActive):
+		return http.StatusBadRequest, err.Error()
+
+	default:
+		return http.StatusInternalServerError, "internal error"
+	}
 }
