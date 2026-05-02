@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/application"
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/infrastructure"
@@ -21,9 +22,10 @@ func main() {
 		infrastructure.NewSystemClock(),
 		&testutils.FakeEventPublisher{})
 
-	httpHandler := infrastructure.NewAuctionCreatorHTTP(auctionService)
-	err := httpHandler.StartHTTPServer()
+	httpHandler := infrastructure.NewAuctionCreatorHTTP(auctionService).Handler()
+
+	err := http.ListenAndServe(":8080", httpHandler)
 	if err != nil {
-		panic("failed to start http server")
+		panic("failed to start http server: " + err.Error())
 	}
 }

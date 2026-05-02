@@ -2,6 +2,7 @@ package tests
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -33,7 +34,7 @@ func TestAuctionCreatorHttp_CreateAuction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer closeBody(t, resp.Body)
 
 	if resp.StatusCode != http.StatusCreated {
 		t.Fatalf("expected status 201, got %d", resp.StatusCode)
@@ -91,7 +92,7 @@ func TestCreateAuction_RejectsNonPOSTMethods(t *testing.T) {
 			if err != nil {
 				t.Fatalf("request failed: %v", err)
 			}
-			defer resp.Body.Close()
+			defer closeBody(t, resp.Body)
 
 			if resp.StatusCode != http.StatusMethodNotAllowed {
 				t.Fatalf("expected 405, got %d", resp.StatusCode)
@@ -120,7 +121,7 @@ func TestCreateAuction_InvalidReservePrice_ReturnsBadRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer closeBody(t, resp.Body)
 
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("expected status 400, got %d", resp.StatusCode)
@@ -140,7 +141,7 @@ func TestCreateAuction_NilItemID_ReturnsBadRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer closeBody(t, resp.Body)
 
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("expected status 400, got %d", resp.StatusCode)
@@ -163,4 +164,11 @@ func newTestAuctionServer(t *testing.T) *httptest.Server {
 	handler := infrastructure.NewAuctionCreatorHTTP(auctionService)
 
 	return httptest.NewServer(handler.Handler())
+}
+
+func closeBody(t *testing.T, body io.Closer) {
+	t.Helper()
+	if err := body.Close(); err != nil {
+		t.Errorf("failed to close body: %v", err)
+	}
 }
