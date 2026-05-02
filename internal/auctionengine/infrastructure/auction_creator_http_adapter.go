@@ -36,6 +36,7 @@ func (a *AuctionCreatorHTTP) createAuction(w http.ResponseWriter, r *http.Reques
 	var req CreateAuctionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
 	}
 
 	auctionResult, err := a.auctionService.CreateAuction(application.CreateAuctionCommand{
