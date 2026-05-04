@@ -1,0 +1,35 @@
+syntax = "proto3";
+package auctionengine;
+
+option go_package = "github.com/Metololo/realtime_bidding_system/proto/auction_engine_proto;auctionpb";
+
+service AuctionEngine {
+  rpc PlaceBid(BidRequest) returns (BidAccepted) {}
+}
+
+message BidRequest {
+  string auctionID = 1;
+  string bidderId  = 2;
+  int64  amount    = 3;
+}
+
+message BidAccepted {
+  string auctionID = 1;
+  string bidderId  = 2;
+  int64  amount    = 3;
+}
+
+message BidRejected {
+  BidRejectionCode code    = 1;
+  string           message = 2;
+}
+
+enum BidRejectionCode {
+  UNSPECIFIED = 0;
+
+  AUCTION_UNAVAILABLE = 1;
+  AUCTION_ENDED       = 2;
+
+  BID_TOO_LOW               = 3;
+  BIDDER_ALREADY_PLACED_BID = 4;
+}
