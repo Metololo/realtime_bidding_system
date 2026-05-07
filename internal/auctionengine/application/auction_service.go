@@ -1,6 +1,8 @@
 package application
 
 import (
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/domain"
@@ -72,12 +74,16 @@ func (a *AuctionService) CreateAuction(auctionCommand CreateAuctionCommand) (*Au
 
 	err = a.scheduleCloseAuction(auction.ID(), auction.EndTime())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to schedule auction %v: %w", auction.ID(), err)
 	}
+	slog.Info("auction closure scheduled",
+		"auctionId", auction.ID(),
+		"endTime", auction.EndTime().Format("2006-01-02 15:04:05"),
+	)
 
 	err = a.publishAuctionCreatedEvent(auction)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to publish auction %v: %w", auction.ID(), err)
 	}
 
 	return &AuctionResult{
@@ -93,7 +99,11 @@ func (a *AuctionService) scheduleCloseAuction(auctionId uuid.UUID, endTime time.
 	err := a.scheduler.Schedule(endTime, func() {
 		err := a.closeAuction(auctionId)
 		if err != nil {
-			_ = err // TODO: idk what to do with it yet, retry ?
+			drift := time.Since(endTime)
+			slog.Error("failed to close auction",
+				slog.String("auctionID", auctionId.String()),
+				slog.String("endTime", drift.String()),
+			)
 		}
 	})
 	return err

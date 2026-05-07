@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
@@ -18,6 +19,9 @@ import (
 
 func main() {
 
+	logger := infrastructure.NewAuctionEngineLogger(slog.LevelDebug)
+	slog.SetDefault(logger)
+
 	fmt.Printf("starting auction-engine")
 	lis, err := net.Listen("tcp", ":9001")
 	if err != nil {
@@ -32,10 +36,10 @@ func main() {
 		testutils.NewFakeClock(time.Now()),
 		&testutils.FakeEventPublisher{})
 
-	handler := infrastructure.NewBidPlacerGRCP(auctionService)
+	grpcHandler := infrastructure.NewBidPlacerGRCP(auctionService)
 
 	grpcServer := grpc.NewServer()
-	auctionpb.RegisterAuctionEngineServer(grpcServer, handler)
+	auctionpb.RegisterAuctionEngineServer(grpcServer, grpcHandler)
 
 	reflection.Register(grpcServer)
 	go func() {
