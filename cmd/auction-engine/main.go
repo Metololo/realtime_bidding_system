@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/application"
@@ -17,6 +19,9 @@ import (
 )
 
 func main() {
+
+	logger := infrastructure.NewAuctionEngineLogger(slog.LevelInfo)
+	slog.SetDefault(logger)
 
 	fmt.Printf("starting auction-engine")
 	lis, err := net.Listen("tcp", ":9001")
@@ -32,10 +37,10 @@ func main() {
 		testutils.NewFakeClock(time.Now()),
 		&testutils.FakeEventPublisher{})
 
-	handler := infrastructure.NewBidPlacerGRCP(auctionService)
+	grpcHandler := infrastructure.NewBidPlacerGRCP(auctionService)
 
 	grpcServer := grpc.NewServer()
-	auctionpb.RegisterAuctionEngineServer(grpcServer, handler)
+	auctionpb.RegisterAuctionEngineServer(grpcServer, grpcHandler)
 
 	reflection.Register(grpcServer)
 	go func() {
@@ -47,8 +52,11 @@ func main() {
 
 	httpHandler := infrastructure.NewAuctionCreatorHTTP(auctionService).Handler()
 
-	log.Println("http handler running on port 8080")
-	if err = http.ListenAndServe(":8080", httpHandler); err != nil {
+	port := os.Getenv("AUCTION_ENGINE_SELL_PORT")
+	addr := ":" + port
+
+	log.Printf("http handler running on port %s\n", port)
+	if err = http.ListenAndServe(addr, httpHandler); err != nil {
 		panic("failed to start http server: " + err.Error())
 	}
 }
