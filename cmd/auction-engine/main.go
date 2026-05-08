@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Metololo/realtime_bidding_system/internal/auctionengine/application"
@@ -51,8 +52,11 @@ func main() {
 
 	httpHandler := infrastructure.NewAuctionCreatorHTTP(auctionService).Handler()
 
-	log.Println("http handler running on port 8080")
-	if err = http.ListenAndServe(":8080", httpHandler); err != nil {
+	port := os.Getenv("AUCTION_ENGINE_SELL_PORT")
+	addr := ":" + port
+
+	log.Printf("http handler running on port %s\n", port)
+	if err = http.ListenAndServe(addr, httpHandler); err != nil {
 		panic("failed to start http server: " + err.Error())
 	}
 }

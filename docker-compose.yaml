@@ -1,0 +1,11 @@
+services:
+  auction-engine:
+    build:
+      context: .
+      dockerfile: deployment/auction-engine.Dockerfile
+
+    env_file:
+      - .env
+
+    ports:
+      - "${AUCTION_ENGINE_SELL_PORT}:${AUCTION_ENGINE_SELL_PORT}"
