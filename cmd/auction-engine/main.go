@@ -20,7 +20,7 @@ import (
 
 func main() {
 
-	logger := infrastructure.NewAuctionEngineLogger(slog.LevelDebug)
+	logger := infrastructure.NewAuctionEngineLogger(slog.LevelInfo)
 	slog.SetDefault(logger)
 
 	fmt.Printf("starting auction-engine")

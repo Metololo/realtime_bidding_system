@@ -11,10 +11,14 @@ help:
 	@echo "  make install-hooks   - Setup the git pre-commit hook"
 	@echo "  make test            - Run tests with race detection"
 	@echo "  make auction-engine  - Run auction engine"
+	@echo "  make seller-service  - Run auction engine"
 	@echo "  make proto           - Generate Go code from protobuf"
 
 auction-engine:
 	go run ./cmd/auction-engine
+
+seller-service:
+	go run ./cmd/seller-service
 
 test:
 	go test -v -race ./... | grep -E "PASS|FAIL|ok"
