@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -20,14 +19,13 @@ import (
 
 func main() {
 
-	logger := infrastructure.NewAuctionEngineLogger(slog.LevelInfo)
-	slog.SetDefault(logger)
-
 	fmt.Printf("starting auction-engine")
 	lis, err := net.Listen("tcp", ":9001")
 	if err != nil {
 		log.Fatalf("failed to listen %v", err)
 	}
+
+	eventPublisher := infrastructure.NewNatsEventPublisher(os.Getenv("NATS_SERVER_URL"))
 
 	activeAuctionManager := inmemory.NewActiveAuctionManager()
 	scheduler := &testutils.FakeManualScheduler{}
@@ -35,7 +33,7 @@ func main() {
 		activeAuctionManager,
 		scheduler,
 		testutils.NewFakeClock(time.Now()),
-		&testutils.FakeEventPublisher{})
+		eventPublisher)
 
 	grpcHandler := infrastructure.NewBidPlacerGRCP(auctionService)
 

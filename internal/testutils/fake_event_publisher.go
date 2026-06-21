@@ -6,7 +6,12 @@ type FakeEventPublisher struct {
 	EventsPublished []domain.Event
 }
 
-func (f *FakeEventPublisher) Publish(event domain.Event) error {
+func (f *FakeEventPublisher) PublishAuctionClosedEvent(event domain.AuctionClosedEvent) error {
+	f.EventsPublished = append(f.EventsPublished, event)
+	return nil
+}
+
+func (f *FakeEventPublisher) PublishAuctionCreatedEvent(event domain.AuctionCreatedEvent) error {
 	f.EventsPublished = append(f.EventsPublished, event)
 	return nil
 }

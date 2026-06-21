@@ -197,8 +197,6 @@ func (x *BidAccepted) GetAmount() int64 {
 	return 0
 }
 
-// BidRejected is returned as a google.rpc.Status detail when PlaceBid fails
-// because the auction domain rejected the bid.
 type BidRejected struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Code          BidRejectionCode       `protobuf:"varint,1,opt,name=code,proto3,enum=auctionengine.BidRejectionCode" json:"code,omitempty"`
