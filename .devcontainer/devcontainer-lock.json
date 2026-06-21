@@ -1,9 +1,19 @@
 {
   "features": {
+    "ghcr.io/devcontainers-extra/features/protoc-asdf:1": {
+      "version": "1.0.7",
+      "resolved": "ghcr.io/devcontainers-extra/features/protoc-asdf@sha256:12500fda83b1247190526a8cf8a6ab6e797eb902f97eb6953d69ff49ee2e01c5",
+      "integrity": "sha256:12500fda83b1247190526a8cf8a6ab6e797eb902f97eb6953d69ff49ee2e01c5"
+    },
     "ghcr.io/nils-geistmann/devcontainers-features/zsh:0": {
       "version": "0.0.8",
       "resolved": "ghcr.io/nils-geistmann/devcontainers-features/zsh@sha256:fd57a61a5187480b5e73f8041be5b67005be48f06503736df6cfdd8d0f38f3c4",
       "integrity": "sha256:fd57a61a5187480b5e73f8041be5b67005be48f06503736df6cfdd8d0f38f3c4"
+    },
+    "ghcr.io/postfinance/devcontainer-features/docker-out:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/postfinance/devcontainer-features/docker-out@sha256:22d3e61bad5411b5076ba64d478b2e71eecb2a05441e4bff34487bfc892e6a81",
+      "integrity": "sha256:22d3e61bad5411b5076ba64d478b2e71eecb2a05441e4bff34487bfc892e6a81"
     },
     "ghcr.io/wxw-matt/devcontainer-features/command_runner:0": {
       "version": "0.5.0",

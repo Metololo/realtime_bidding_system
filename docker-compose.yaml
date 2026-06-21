@@ -22,3 +22,11 @@ services:
       AUCTION_ENGINE_URL: "http://auction-engine:${AUCTION_ENGINE_SELL_PORT}"
     depends_on:
       - auction-engine
+
+  nats-server:
+    mem_limit: 512m
+    cpus: 0.20
+    image: nats:alpine
+    ports:
+      - 4222:4222
+      - 8222:8222

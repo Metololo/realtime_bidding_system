@@ -3,7 +3,9 @@
 	"image": "mcr.microsoft.com/devcontainers/go:2-1.26-trixie",
 	"features": {
 		"ghcr.io/wxw-matt/devcontainer-features/command_runner:0": {},
-		"ghcr.io/nils-geistmann/devcontainers-features/zsh:0": {}
+		"ghcr.io/nils-geistmann/devcontainers-features/zsh:0": {},
+		"ghcr.io/postfinance/devcontainer-features/docker-out:1": {},
+		"ghcr.io/devcontainers-extra/features/protoc-asdf:1": {}
 	},
 	"mounts": [
 		"source=${localEnv:HOME}/.zshrc,target=/home/vscode/.zshrc,type=bind",

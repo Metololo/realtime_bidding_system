@@ -124,7 +124,7 @@ func (a *AuctionService) closeAuction(id uuid.UUID) error {
 }
 
 func (a *AuctionService) publishAuctionCreatedEvent(auction *domain.Auction) error {
-	return a.eventPublisher.Publish(domain.AuctionCreatedEvent{
+	return a.eventPublisher.PublishAuctionCreatedEvent(domain.AuctionCreatedEvent{
 		BaseEvent:    domain.BaseEvent{ID: uuid.New(), At: a.clock.Now()},
 		AuctionID:    auction.ID(),
 		ItemID:       auction.ItemID(),
@@ -138,7 +138,7 @@ func (a *AuctionService) publishAuctionClosedEvent(closeAuctionResult CloseAucti
 
 	outcome := deriveOutcome(closeAuctionResult.WinnerInfo)
 
-	return a.eventPublisher.Publish(domain.AuctionClosedEvent{
+	return a.eventPublisher.PublishAuctionClosedEvent(domain.AuctionClosedEvent{
 		BaseEvent: domain.BaseEvent{ID: uuid.New(), At: a.clock.Now()},
 		AuctionID: closeAuctionResult.AuctionID,
 		ItemID:    closeAuctionResult.ItemID,
