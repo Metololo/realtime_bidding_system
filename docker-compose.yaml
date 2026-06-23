@@ -7,8 +7,14 @@ services:
       dockerfile: deployment/auction-engine.Dockerfile
     env_file:
       - .env
+    environment:
+      NATS_SERVER_URL: "nats://nats-server:4222"
+      AUCTION_ENGINE_GRPC_PORT: "9001"
     ports:
       - "${AUCTION_ENGINE_SELL_PORT}:${AUCTION_ENGINE_SELL_PORT}"
+      - "9001:9001"
+    depends_on:
+      - nats-server
 
   seller-service:
     mem_limit: 512m
@@ -21,6 +27,42 @@ services:
     environment:
       AUCTION_ENGINE_URL: "http://auction-engine:${AUCTION_ENGINE_SELL_PORT}"
     depends_on:
+      - auction-engine
+
+  bidder-conservative:
+    mem_limit: 512m
+    cpus: 0.25
+    build:
+      context: .
+      dockerfile: deployment/bidder-service.Dockerfile
+    environment:
+      CONFIG_PATH: "/configs/bidders/conservative.yaml"
+    depends_on:
+      - nats-server
+      - auction-engine
+
+  bidder-balanced:
+    mem_limit: 512m
+    cpus: 0.25
+    build:
+      context: .
+      dockerfile: deployment/bidder-service.Dockerfile
+    environment:
+      CONFIG_PATH: "/configs/bidders/balanced.yaml"
+    depends_on:
+      - nats-server
+      - auction-engine
+
+  bidder-aggressive:
+    mem_limit: 512m
+    cpus: 0.25
+    build:
+      context: .
+      dockerfile: deployment/bidder-service.Dockerfile
+    environment:
+      CONFIG_PATH: "/configs/bidders/aggressive.yaml"
+    depends_on:
+      - nats-server
       - auction-engine
 
   nats-server:

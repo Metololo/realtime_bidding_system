@@ -10,6 +10,6 @@ COPY . .
 
 RUN go build -o auction-engine ./cmd/auction-engine
 
-EXPOSE 8080
+EXPOSE 8080 9001
 
 CMD ["./auction-engine"]

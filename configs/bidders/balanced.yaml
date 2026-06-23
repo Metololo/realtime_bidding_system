@@ -1,0 +1,13 @@
+bidder:
+  id: "22222222-2222-2222-2222-222222222222"
+  strategy: balanced
+
+nats:
+  url: "nats://nats-server:4222"
+  # Empty queue_group means this bidder receives every auction event.
+  # Do not share one queue group between different strategies, or NATS will load-balance events.
+  queue_group: ""
+
+auction_engine:
+  grpc_addr: "auction-engine:9001"
+  timeout: 3s
